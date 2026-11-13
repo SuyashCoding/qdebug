@@ -4,3 +4,5 @@ __pycache__/
 session_*.json
 demo/work/
 demo/
+PRESENTATION_SCRIPT*.md
+*.pptx
