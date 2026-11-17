@@ -19,6 +19,7 @@ project's interpreter, so they stay compatible with Python 3.8.
 from __future__ import annotations
 
 import argparse
+import atexit
 import functools
 import importlib.util
 import json
@@ -32,7 +33,9 @@ from dataclasses import dataclass
 
 from qdebug.tracer import TreeLimits, set_path_masks
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
+# the only modules the child process imports; they stay compatible with Python 3.8
+CHILD_MODULES = ("__init__.py", "runner.py", "plugin.py", "tracer.py")
 MODES = ("spectrum", "tree", "zoom", "plain")
 SPECTRUM_BACKENDS = ("auto", "settrace", "monitoring")
 # pytest exit codes that mean "no usable results" (1 = some tests failed is expected)
@@ -52,6 +55,7 @@ class RunOptions:
     suite: tuple = ()              # test paths / selection for the whole-suite spectrum run only
     pythonpath: tuple = ()         # extra import paths, relative to the project (or absolute)
     seed_random: bool = True       # random.seed(0) before every test (determinism across re-runs)
+    trace_setup: bool = True       # also trace the fixtures that run before the test
     spectrum_backend: str = "auto"
     max_nodes: int = TreeLimits.max_nodes  # execution-tree limits, see tracer.TreeLimits
     max_repeat: int = TreeLimits.max_repeat
@@ -73,6 +77,31 @@ def resolve_python(python):
                 return candidate
         raise RunnerError(f"no python interpreter found in virtualenv {python}")
     return python
+
+
+_child_path = None
+
+
+def child_pythonpath():
+    """A directory that makes `qdebug.runner` importable in the child, and nothing else.
+
+    The child may run on another interpreter (the project's virtualenv). Putting
+    the directory that holds the installed qdebug package on its PYTHONPATH
+    would also expose everything else in it, i.e. the whole site-packages of
+    qdebug's own environment, ahead of the project's dependencies. So the few
+    modules the child needs are copied, once per process, into a private
+    directory.
+    """
+    global _child_path
+    if _child_path is None or not os.path.isdir(_child_path):
+        root = tempfile.mkdtemp(prefix="qdebug_child_")
+        package = os.path.join(root, "qdebug")
+        os.mkdir(package)
+        for name in CHILD_MODULES:
+            shutil.copyfile(os.path.join(PACKAGE_DIR, name), os.path.join(package, name))
+        atexit.register(shutil.rmtree, root, ignore_errors=True)
+        _child_path = root
+    return _child_path
 
 
 def make_runner(options):
@@ -104,6 +133,8 @@ def invoke(project, mode, test=None, monitored=None, target=None, max_repr=300, 
         cmd += ["--target", target]
     if not opts.seed_random:
         cmd.append("--no-seed-random")
+    if not opts.trace_setup:
+        cmd.append("--no-trace-setup")
     if monitored is not None:
         monitor_path = os.path.join(workdir, "monitored.json")
         with open(monitor_path, "w", encoding="utf-8") as fh:
@@ -120,7 +151,7 @@ def invoke(project, mode, test=None, monitored=None, target=None, max_repr=300, 
         env.pop("PYTEST_DISABLE_PLUGIN_AUTOLOAD", None)
     else:
         env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
-    paths = ([REPO_ROOT] + [os.path.normpath(os.path.join(project, p)) for p in opts.pythonpath]
+    paths = ([child_pythonpath()] + [os.path.normpath(os.path.join(project, p)) for p in opts.pythonpath]
              + [env.get("PYTHONPATH")])
     env["PYTHONPATH"] = os.pathsep.join(p for p in paths if p)
     start = time.perf_counter()
@@ -221,6 +252,7 @@ def main(argv=None):
     parser.add_argument("--max-repeat", type=int, default=DEFAULT_OPTIONS.max_repeat)
     parser.add_argument("--max-depth", type=int, default=DEFAULT_OPTIONS.max_depth)
     parser.add_argument("--no-seed-random", action="store_true")
+    parser.add_argument("--no-trace-setup", action="store_true")
     parser.add_argument("pytest_args", nargs="*")
     args = parser.parse_args(argv)
 
@@ -236,7 +268,8 @@ def main(argv=None):
     limits = TreeLimits(args.max_nodes, args.max_repeat, args.max_depth)
     plugin = QDebugPlugin(args.mode, project, monitored, args.target, args.max_repr,
                           spectrum_backend=args.spectrum_backend, limits=limits,
-                          seed_random=not args.no_seed_random)
+                          seed_random=not args.no_seed_random,
+                          trace_setup=not args.no_trace_setup)
     pytest_args = ["-q", "-p", "no:cacheprovider"]
     if pytest_version(pytest) >= (3, 5):  # older pytest has no --rootdir; cwd is the project anyway
         pytest_args += ["--rootdir", project]

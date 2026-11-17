@@ -2,18 +2,18 @@
 
 import builtins
 import io
-import os
 
 import pytest
 from rich.console import Console
 
+from helpers import SHOP
 from qdebug import cli
 from qdebug.spectrum import TestRecord
+from qdebug.suites import ensure_variants
 from qdebug.ui import UI, failure_summary
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BUG = os.path.join(ROOT, "variants", "bug_01")
-FIXED = os.path.join(ROOT, "sample_project")
+BUG = SHOP.variant("bug_01")
+FIXED = SHOP.project
 
 
 def recording_ui(*_args, **_kwargs):
@@ -22,6 +22,7 @@ def recording_ui(*_args, **_kwargs):
 
 @pytest.fixture
 def ui(monkeypatch):
+    ensure_variants(SHOP)
     made = recording_ui()
     monkeypatch.setattr(cli, "make_ui", lambda args: None if args.plain else made)
     return made
@@ -69,3 +70,21 @@ def test_choose_test_skips_the_menu_for_one_failure():
     ui = recording_ui()
     assert ui.choose_test([TestRecord("t.py::a", "failed")]) == "t.py::a"
     assert text_of(ui) == ""
+
+
+def test_claude_hint_and_explanation_are_shown():
+    from helpers import make_tree
+    from qdebug.ai.assistant import Explanation, Triage
+    from qdebug.oracles import Answer, Question
+
+    ui = recording_ui()
+    node = make_tree(("test", [("f", [])])).nodes[1]
+    question = Question("call", node, number=1,
+                        meta={"ai": Answer("no", confidence=0.6, note="claude 60%: 2 + 1 is not 4")})
+    ui.show_call(question, None)
+    ui.triage(Triage("state", ["m.py::f"], "the list keeps growing"), "claude-haiku-5-5")
+    ui.explanation(Explanation("off by one", "10 should count.", "    if quantity >= 10:", "high"))
+    out = text_of(ui)
+    assert "Claude thinks: wrong (60% sure). 2 + 1 is not 4" in out
+    assert "a problem with shared state" in out and "First suspects: f" in out
+    assert "Suggested fix:" in out and "if quantity >= 10:" in out

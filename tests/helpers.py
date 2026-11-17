@@ -1,7 +1,14 @@
-"""Synthetic trees and scripted oracles shared by the unit tests."""
+"""Synthetic trees, scripted oracles and benchmark paths shared by the tests."""
+
+import os
 
 from qdebug.oracles import Answer, Oracle
+from qdebug.suites import Suite
 from qdebug.tree import ExecutionTree
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SHOP = Suite(os.path.join(ROOT, "benchmarks", "shop"))
+PLANNER = Suite(os.path.join(ROOT, "benchmarks", "planner"))
 
 
 def snap(text):

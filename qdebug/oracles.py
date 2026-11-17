@@ -11,6 +11,9 @@ judge(question, ctx) returns an Answer. Verdicts: yes, no, unknown, and
 inadmissible ("I can't judge the output because the inputs are already
 wrong", a refinement of unknown). Interactive oracles may also return control
 actions (trust / undo / quit) which the session handles.
+
+Claude-based oracles live in qdebug.ai, so that this module never needs the
+Anthropic SDK.
 """
 
 import random
@@ -37,9 +40,21 @@ class Question:
 @dataclass
 class Answer:
     verdict: str | None            # yes / no / unknown, or None for pure actions
-    confidence: float = 1.0
+    confidence: float = 1.0        # below 1.0: the answer's own error rate counts (session.answer_error)
     action: str | None = None      # None, "trust", "undo", "quit"
     note: str = ""
+
+
+WORDS = {"yes": "right", "no": "wrong", "unknown": "not sure", "inadmissible": "the inputs are already wrong"}
+
+
+def ai_hint(question):
+    """Claude's opinion on a question it was not sure enough to answer (hybrid oracle), or None."""
+    answer = question.meta.get("ai")
+    if answer is None or answer.verdict is None:
+        return None
+    reason = answer.note.split(": ", 1)[1] if ": " in answer.note else answer.note
+    return f"Claude thinks: {WORDS.get(answer.verdict, answer.verdict)} ({answer.confidence:.0%} sure). {reason}"
 
 
 class Oracle:
@@ -111,7 +126,8 @@ def describe_checkpoint(question, context=3, max_repr=300):
 CALL_HELP = """  y  correct        n  wrong          ?  don't know
   i  the inputs are already wrong (can't judge the output)
   t  trust this function (all its calls are correct)
-  s  show source    w  why this question    tree  show the execution tree
+  s  show source    e  calls of it in passing tests    w  why this question
+  tree  show the execution tree
   u  undo last answer                     q  quit and report"""
 LINE_HELP = """  y  state is correct    n  state is wrong    ?  don't know
   s  show the whole function    u  undo last line answer    q  stop zooming"""
@@ -122,7 +138,7 @@ class HumanOracle(Oracle):
 
     name = "human"
 
-    call_prompt = "Is this output correct for these inputs? [y/n/?/i/t/s/w/tree/u/q/h] > "
+    call_prompt = "Is this output correct for these inputs? [y/n/?/i/t/s/e/w/tree/u/q/h] > "
     line_prompt = "Is this state correct? [y/n/?/s/u/q/h] > "
     call_help = CALL_HELP
     line_help = LINE_HELP
@@ -145,11 +161,17 @@ class HumanOracle(Oracle):
             header += f"  (tier {question.meta['tier']}%)"
         self.print(header + " " + "─" * max(0, 60 - len(header)))
         self.print(describe_call(question.node, question.func_info, max_repr=self.max_repr))
+        hint = ai_hint(question)
+        if hint:
+            self.print(f"  {hint}")
 
     def show_line(self, question, ctx):
         self.print("")
         self.print(f"── Line question {question.number} " + "─" * 40)
         self.print(describe_checkpoint(question, max_repr=self.max_repr))
+        hint = ai_hint(question)
+        if hint:
+            self.print(f"  {hint}")
 
     def judge(self, question, ctx=None):
         if question.kind == "call":
@@ -185,6 +207,9 @@ class HumanOracle(Oracle):
             if cmd in ("w", "why") and question.kind == "call" and ctx is not None:
                 self.print(ctx.explain(question.node))
                 continue
+            if cmd in ("e", "examples") and question.kind == "call" and ctx is not None:
+                self.print(ctx.format_examples(question.node))
+                continue
             if cmd == "tree" and question.kind == "call" and ctx is not None:
                 self.print(ctx.render_tree())
                 continue
@@ -199,11 +224,13 @@ class GroundTruthOracle(Oracle):
 
     "call": yes iff the fixed run has a call with the same path id, equal
     inputs and equal outputs (return, exception, post-call argument state),
-    all compared by full repr. If the path is missing the answer is
-    "unknown". If the inputs differ, the inputs are already infected and the
-    output cannot be judged on its own: the answer is "inadmissible", the
-    refinement of "unknown" that says why (the session downgrades it to plain
-    "unknown" when inadmissible answers are disabled).
+    all compared by full repr. If the inputs differ, the inputs are already
+    infected and the output cannot be judged on its own: the answer is
+    "inadmissible", the refinement of "unknown" that says why (the session
+    downgrades it to plain "unknown" when inadmissible answers are disabled).
+    A call the fixed run never makes is inadmissible too: whatever made the
+    program take this path ran before the call started. absent_call="unknown"
+    restores the older, weaker answer.
 
     "line": compares locals (and aliasing between locals) at the same
     (line, occurrence) checkpoint of the same call. A checkpoint the fixed
@@ -212,11 +239,12 @@ class GroundTruthOracle(Oracle):
 
     name = "truth"
 
-    def __init__(self, fixed_project, test_id, run=invoke, max_repr=300):
+    def __init__(self, fixed_project, test_id, run=invoke, max_repr=300, absent_call="inadmissible"):
         self.fixed_project = fixed_project
         self.test_id = test_id
         self.run = run
         self.max_repr = max_repr
+        self.absent_call = absent_call
         self._tree = None
         self._zooms = {}
 
@@ -245,8 +273,10 @@ class GroundTruthOracle(Oracle):
         if node.args is None:
             return Answer("unknown", note="no values recorded")
         fixed = self.fixed_tree().by_path.get(node.path)
-        if fixed is None or fixed.args is None:
-            return Answer("unknown", note="call does not exist in the fixed run")
+        if fixed is None:
+            return Answer(self.absent_call, note="the fixed program never makes this call")
+        if fixed.args is None:
+            return Answer("unknown", note="no values recorded in the fixed run")
         if fixed.input_key() != node.input_key():
             return Answer("inadmissible", note="inputs differ from the fixed run (already infected)")
         if fixed.output_key() == node.output_key():
@@ -260,7 +290,9 @@ class GroundTruthOracle(Oracle):
     def _judge_line(self, node, cp):
         record = self.fixed_checkpoints(node.path)
         if record is None:
-            return Answer("unknown", note="call does not exist in the fixed run")
+            # nothing inside a call that should not happen is right, its entry state included
+            verdict = "no" if self.absent_call == "inadmissible" else "unknown"
+            return Answer(verdict, note="the fixed program never makes this call")
         fixed = {self._cp_key(c): c for c in record["checkpoints"]}
         other = fixed.get(self._cp_key(cp))
         if other is None:
@@ -273,6 +305,37 @@ class GroundTruthOracle(Oracle):
                 a, b = cp.get(key), other.get(key)
                 same = same and (a and a["full"]) == (b and b["full"])
         return Answer("yes" if same else "no")
+
+
+class ConfidentNoisyOracle(Oracle):
+    """Wraps another oracle; wrong at a varying rate, and says how sure it is.
+
+    A stand-in for a model oracle in experiments. For each question an error
+    rate q is drawn uniformly from [0, 2 * mean_error]; the yes/no verdict is
+    flipped with probability q, and the stated confidence is 1 - q / overconfidence
+    (overconfidence 1: perfectly calibrated; 2: claims half the real error rate).
+    """
+
+    def __init__(self, base, mean_error, seed=0, overconfidence=1.0):
+        self.base = base
+        self.mean_error = mean_error
+        self.overconfidence = overconfidence
+        self.rng = random.Random(seed)
+        self.name = f"confident-noisy({base.name},{mean_error})"
+        self.flips = 0
+
+    def judge(self, question, ctx=None):
+        answer = self.base.judge(question, ctx)
+        q = self.rng.uniform(0.0, 2 * self.mean_error)
+        draw = self.rng.random()
+        if answer.verdict not in ("yes", "no") or answer.action is not None:
+            return answer
+        confidence = min(0.99, 1.0 - q / self.overconfidence)
+        verdict = answer.verdict
+        if draw < q:
+            self.flips += 1
+            verdict = "no" if verdict == "yes" else "yes"
+        return Answer(verdict, confidence, None, note=f"simulated {confidence:.0%}")
 
 
 class NoisyOracle(Oracle):
@@ -293,26 +356,3 @@ class NoisyOracle(Oracle):
             flipped = "no" if answer.verdict == "yes" else "yes"
             return Answer(flipped, answer.confidence, None, note="flipped by NoisyOracle")
         return answer
-
-
-class LLMOracle(Oracle):
-    """Placeholder for a language-model oracle. Not implemented on purpose.
-
-    Intended design: for a "call" question the model would see the function's
-    signature and docstring, the caller's context (the caller's signature,
-    docstring and the line that makes the call), the concrete inputs and
-    outputs (including argument mutations), and examples of the same function
-    taken from *passing* tests (input/output pairs recorded in spectrum or tree
-    mode). It would deliberately NOT see the function body: an LLM shown the
-    buggy implementation tends to rationalize the buggy behaviour as intended.
-    It would answer yes/no/unknown with a calibrated confidence that the
-    session can map onto a per-answer error rate in belief.Belief. For "line"
-    questions it would see the statement just executed plus the locals before
-    and after. Plug it in by implementing judge() and registering it in
-    cli.make_oracle.
-    """
-
-    name = "llm"
-
-    def judge(self, question, ctx=None):
-        raise NotImplementedError("LLMOracle is a design stub; no LLM is called in this prototype")

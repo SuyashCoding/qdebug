@@ -16,6 +16,12 @@ Only code under the project directory is traced; the stdlib, site-packages
 and qdebug itself are excluded. Generator expressions, lambdas and other
 generator frames are "transparent": they do not become tree nodes, and the
 lines they execute are attributed to the enclosing call.
+
+A test is traced in two phases (see plugin.py): its setup, where pytest runs
+the fixtures, and its call. When the test function is known in advance
+(begin_test), it is the root of the tree from the start, and project code
+that fixtures call during setup becomes the root's first children. Otherwise
+only the call phase is traced and its first project frame is the root.
 """
 
 import hashlib
@@ -341,6 +347,29 @@ class BaseTracer:
         self._file_cache = {}
         self._code_cache = {}
         self._fixture_frame = None  # a unittest setUp currently running
+        self.phase = "call"         # "setup" while pytest runs the test's fixtures
+        self.root_code = None       # code object of the test function, when known in advance
+
+    def begin_test(self, code):
+        """Called before the setup phase with the test function's code object (or None).
+
+        Returns True if setup will be traced, i.e. the test function is
+        project code and can be the root before it runs.
+        """
+        self.phase = "setup"
+        info = self.code_info(code) if code is not None else None
+        if info is None or info.transparent:
+            return False
+        self.root_code = code
+        self._open_root(info)
+        return True
+
+    def enter_call(self):
+        """Called when the setup phase is over and the test itself is about to run."""
+        self.phase = "call"
+
+    def _open_root(self, info):
+        """Subclasses that build call paths create their root here."""
 
     def _in_fixture(self, frame, at_top):
         """True while a unittest setUp runs: it must not become the root of the tree."""
@@ -487,7 +516,7 @@ def make_spectrum_tracer(project_dir, max_repr=300, backend="auto"):
 class _Active:
     """Book-keeping for a call that is currently on the stack."""
 
-    __slots__ = ("frame", "node", "child_counts", "orig", "pre", "pending_exc")
+    __slots__ = ("frame", "node", "child_counts", "orig", "pre", "pending_exc", "free")
 
     def __init__(self, frame, node):
         self.frame = frame
@@ -496,6 +525,7 @@ class _Active:
         self.orig = None
         self.pre = None
         self.pending_exc = None
+        self.free = ()
 
 
 @dataclass(frozen=True)
@@ -570,14 +600,48 @@ class TreeTracer(BaseTracer):
         top.child_counts[qualname] = k + 1
         return f"{top.node['path']}/{qualname}#{k}"
 
+    def _new_node(self, info, frame):
+        parent = self.stack[-1] if self.stack else None
+        node = {
+            "id": len(self.nodes),
+            "path": self._child_path(info.qualname),
+            "qualname": info.qualname,
+            "func": info.func,
+            "file": info.relfile,
+            "line": info.firstlineno,
+            "parent": parent.node["id"] if parent else None,
+            # None for calls made by fixtures: no line of the test makes them
+            "call_line": parent.frame.f_lineno if parent and parent.frame is not None else None,
+            "children": [],
+            "monitored": self._is_monitored(info, parent is None),
+            "own_lines": set(),
+        }
+        if parent:
+            parent.node["children"].append(node["id"])
+        self.nodes.append(node)
+        return _Active(frame, node)
+
+    def _open_root(self, info):
+        self.stack.append(self._new_node(info, None))
+
+    def _root_unbound(self):
+        """The root exists but the test function has not been entered yet."""
+        return len(self.stack) == 1 and self.stack[0].frame is None
+
     def _global(self, frame, event, arg):
         if self.finished:
             return None
         info = self.code_info(frame.f_code)
         if info is None:
             return None
-        if self._in_fixture(frame, not self.stack):
-            return self._fixture_local if frame is self._fixture_frame else None
+        if self.root_code is None:
+            if self.phase == "setup":
+                return None  # the test function is unknown: only its call phase is traced
+            if self._in_fixture(frame, not self.stack):
+                return self._fixture_local if frame is self._fixture_frame else None
+        elif self._root_unbound() and self.phase == "call" and frame.f_code is self.root_code:
+            self.stack[0].frame = frame  # the test function itself: the root starts running
+            return self._local
         if info.transparent:
             return self._transparent if self.stack else None
         if self.folded:
@@ -586,28 +650,17 @@ class TreeTracer(BaseTracer):
             reason = self._fold_reason(info)
             if reason is not None:
                 return self._fold(frame, reason)
-        is_root = not self.stack
-        node = {
-            "id": len(self.nodes),
-            "path": self._child_path(info.qualname),
-            "qualname": info.qualname,
-            "func": info.func,
-            "file": info.relfile,
-            "line": info.firstlineno,
-            "parent": self.stack[-1].node["id"] if self.stack else None,
-            "call_line": self.stack[-1].frame.f_lineno if self.stack else None,
-            "children": [],
-            "monitored": self._is_monitored(info, is_root),
-            "own_lines": set(),
-        }
-        if self.stack:
-            self.stack[-1].node["children"].append(node["id"])
-        self.nodes.append(node)
-        active = _Active(frame, node)
+        active = self._new_node(info, frame)
+        node = active.node
         if node["monitored"]:
-            names = arg_names(frame.f_code)
+            # A nested function also reads and changes the variables of the
+            # function around it: they are inputs and outputs like arguments.
+            active.free = tuple(n for n in frame.f_code.co_freevars if n != "__class__")
+            names = arg_names(frame.f_code) + active.free
             f_locals = frame.f_locals
             active.orig = {n: f_locals[n] for n in names if n in f_locals}
+            if active.free:
+                node["closure"] = [n for n in active.free if n in active.orig]
             # rendered now, before the call can mutate them (no deepcopy: real
             # objects such as connections or sessions often cannot be copied)
             active.pre = {n: snapshot(state_of(n, v), self.max_repr) for n, v in active.orig.items()}
@@ -641,12 +694,18 @@ class TreeTracer(BaseTracer):
     def _finish(self, active, retval):
         node = active.node
         node["own_lines"] = sorted([f, n] for f, n in node["own_lines"])
+        if active.pending_exc is not None:
+            # kept for every call: the calls an exception travelled through
+            node["raised"] = active.pending_exc[0].__name__
         if not node["monitored"]:
             return
         mr = self.max_repr
         node["args"] = active.pre
         after = {}
+        f_locals = active.frame.f_locals if active.free else {}
         for name, value in active.orig.items():
+            if name in active.free:  # may have been rebound (nonlocal), not only mutated
+                value = f_locals.get(name, value)
             snap = snapshot(state_of(name, value), mr)
             if snap["full"] != node["args"][name]["full"]:
                 after[name] = snap
@@ -679,10 +738,14 @@ class ZoomTracer(BaseTracer):
         self.stack = []  # list of [frame, path, child_counts]
         self.target_frame = None
         self.checkpoints = []
+        self.callees = []  # paths of the target's direct callees; checkpoints index into it
         self.occurrences = {}
         self.pending_exc = None
         self.found = False
         self.finished = False
+
+    def _open_root(self, info):
+        self.stack.append([None, info.qualname, {}])
 
     def _global(self, frame, event, arg):
         if self.finished:
@@ -690,8 +753,15 @@ class ZoomTracer(BaseTracer):
         info = self.code_info(frame.f_code)
         if info is None:
             return None
-        if self._in_fixture(frame, not self.stack):
-            return self._fixture_local if frame is self._fixture_frame else None
+        if self.root_code is None:
+            if self.phase == "setup":
+                return None
+            if self._in_fixture(frame, not self.stack):
+                return self._fixture_local if frame is self._fixture_frame else None
+        elif (len(self.stack) == 1 and self.stack[0][0] is None and self.phase == "call"
+              and frame.f_code is self.root_code):
+            self.stack[0][0] = frame
+            return self._local
         if info.transparent:
             return None
         if self.stack:
@@ -699,6 +769,8 @@ class ZoomTracer(BaseTracer):
             k = counts.get(info.qualname, 0)
             counts[info.qualname] = k + 1
             path = f"{self.stack[-1][1]}/{info.qualname}#{k}"
+            if self.target_frame is not None and self.stack[-1][0] is self.target_frame:
+                self.callees.append(path)  # a direct callee of the target, in call order
         else:
             path = info.qualname
         self.stack.append([frame, path, {}])
@@ -724,13 +796,15 @@ class ZoomTracer(BaseTracer):
                 snaps, aliases = self._locals(frame)
                 self.checkpoints.append({"index": len(self.checkpoints), "kind": "line",
                                          "line": line, "occurrence": occ,
-                                         "locals": snaps, "aliases": aliases})
+                                         "locals": snaps, "aliases": aliases,
+                                         "calls": len(self.callees)})
             elif event == "exception":
                 self.pending_exc = arg
             elif event == "return":
                 snaps, aliases = self._locals(frame)
                 cp = {"index": len(self.checkpoints), "kind": "return", "line": None,
-                      "occurrence": 1, "locals": snaps, "aliases": aliases}
+                      "occurrence": 1, "locals": snaps, "aliases": aliases,
+                      "calls": len(self.callees)}
                 if self.pending_exc is not None:
                     cp["exc"] = exception_snapshot(self.pending_exc, self.max_repr)
                     cp["ret"] = None
@@ -746,4 +820,5 @@ class ZoomTracer(BaseTracer):
         return self._local
 
     def result(self):
-        return {"target": self.target_path, "found": self.found, "checkpoints": self.checkpoints}
+        return {"target": self.target_path, "found": self.found, "checkpoints": self.checkpoints,
+                "callees": self.callees}

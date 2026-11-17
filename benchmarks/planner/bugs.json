@@ -1,0 +1,454 @@
+[
+  {
+    "id": "p01-dict-iteration",
+    "category": "crash",
+    "kind": "container changed while iterating",
+    "description": "drop_done iterates the task dict itself while remove() deletes from it: RuntimeError.",
+    "file": "planner/models.py",
+    "function": "Plan.drop_done",
+    "old": "        for name in list(self._tasks):",
+    "new": "        for name in self._tasks:",
+    "buggy_lines": [
+      108
+    ]
+  },
+  {
+    "id": "p02-missing-return",
+    "category": "crash",
+    "kind": "missing return (falls through to the wrong branch)",
+    "description": "The weeks branch computes the days but does not return them, so '1w' reaches int('1w').",
+    "file": "planner/parser.py",
+    "function": "parse_duration",
+    "old": "            return int(text[:-1]) * WEEK",
+    "new": "            days = int(text[:-1]) * WEEK",
+    "buggy_lines": [
+      36
+    ]
+  },
+  {
+    "id": "p03-case-validation",
+    "category": "crash",
+    "kind": "valid input rejected (missing normalisation)",
+    "description": "Priorities are no longer lower-cased before validation, so '!High' is rejected.",
+    "file": "planner/parser.py",
+    "function": "parse_line",
+    "old": "            priority = word[1:].lower()",
+    "new": "            priority = word[1:]",
+    "buggy_lines": [
+      71
+    ]
+  },
+  {
+    "id": "p04-unpack-split",
+    "category": "crash",
+    "kind": "unbounded split breaks tuple unpacking",
+    "description": "split without maxsplit: a second colon later in the line breaks the unpacking (ValueError).",
+    "file": "planner/parser.py",
+    "function": "split_fields",
+    "old": "    name, rest = line.split(\":\", 1)",
+    "new": "    name, rest = line.split(\":\")",
+    "buggy_lines": [
+      53
+    ]
+  },
+  {
+    "id": "p05-untrimmed-deps",
+    "category": "crash",
+    "kind": "wrong value that crashes later, in another function",
+    "description": "Dependency names keep their leading space, so parse_plan later rejects ' copy' as unknown.",
+    "file": "planner/parser.py",
+    "function": "parse_deps",
+    "old": "    return tuple(part.strip() for part in text.split(\",\") if part.strip())",
+    "new": "    return tuple(part for part in text.split(\",\") if part.strip())",
+    "buggy_lines": [
+      46
+    ]
+  },
+  {
+    "id": "p06-empty-guard",
+    "category": "crash",
+    "kind": "wrong emptiness check",
+    "description": "An empty load dict is not None, so min() runs on an empty sequence (ValueError).",
+    "file": "planner/workload.py",
+    "function": "busiest",
+    "old": "    if not load:",
+    "new": "    if load is None:",
+    "buggy_lines": [
+      17
+    ]
+  },
+  {
+    "id": "p07-zero-division",
+    "category": "crash",
+    "kind": "wrong guard before a division",
+    "description": "The guard for a plan without work never fires: ZeroDivisionError.",
+    "file": "planner/report.py",
+    "function": "progress",
+    "old": "    if total == 0:",
+    "new": "    if total < 0:",
+    "buggy_lines": [
+      10
+    ]
+  },
+  {
+    "id": "p08-missed-cycle",
+    "category": "crash",
+    "kind": "wrong state marker; infinite recursion in another function",
+    "description": "Tasks are marked done before their dependencies are followed, so cycles are never found and order() recurses until RecursionError.",
+    "file": "planner/graph.py",
+    "function": "find_cycle.<locals>.follow",
+    "old": "        state[name] = \"open\"",
+    "new": "        state[name] = \"done\"",
+    "buggy_lines": [
+      19
+    ]
+  },
+  {
+    "id": "p09-weekend-boundary",
+    "category": "wrong-value",
+    "kind": "boundary comparison",
+    "description": "Saturday (day 5 of the week) counts as a working day.",
+    "file": "planner/workdays.py",
+    "function": "is_workday",
+    "old": "    return day % 7 < 5 and day not in holidays",
+    "new": "    return day % 7 <= 5 and day not in holidays",
+    "buggy_lines": [
+      8
+    ]
+  },
+  {
+    "id": "p10-loop-off-by-one",
+    "category": "wrong-value",
+    "kind": "loop runs once too often",
+    "description": "The loop consumes one working day too many.",
+    "file": "planner/workdays.py",
+    "function": "add_workdays",
+    "old": "    while remaining > 0:",
+    "new": "    while remaining >= 0:",
+    "buggy_lines": [
+      26
+    ]
+  },
+  {
+    "id": "p11-range-end",
+    "category": "wrong-value",
+    "kind": "inclusive instead of exclusive range",
+    "description": "The last day is counted although the range is documented as exclusive.",
+    "file": "planner/workdays.py",
+    "function": "workdays_between",
+    "old": "    return sum(1 for day in range(first, last) if is_workday(day, holidays))",
+    "new": "    return sum(1 for day in range(first, last + 1) if is_workday(day, holidays))",
+    "buggy_lines": [
+      35
+    ]
+  },
+  {
+    "id": "p12-wrong-attribute",
+    "category": "wrong-value",
+    "kind": "wrong attribute",
+    "description": "A task may start when its dependencies start instead of when they end.",
+    "file": "planner/schedule.py",
+    "function": "earliest_start",
+    "old": "        start = max(start, slots[dep].end)",
+    "new": "        start = max(start, slots[dep].start)",
+    "buggy_lines": [
+      19
+    ]
+  },
+  {
+    "id": "p13-wrong-variable",
+    "category": "wrong-value",
+    "kind": "wrong variable in the middle of a long function",
+    "description": "An owner counts as free again from the start of their task, so their tasks overlap.",
+    "file": "planner/schedule.py",
+    "function": "build_schedule",
+    "old": "            free_from[task.owner] = end",
+    "new": "            free_from[task.owner] = start",
+    "buggy_lines": [
+      37
+    ]
+  },
+  {
+    "id": "p14-wrong-method",
+    "category": "wrong-value",
+    "kind": "wrong library method",
+    "description": "The path is sorted alphabetically instead of reversed.",
+    "file": "planner/schedule.py",
+    "function": "critical_path",
+    "old": "    path.reverse()",
+    "new": "    path.sort()",
+    "buggy_lines": [
+      55
+    ]
+  },
+  {
+    "id": "p15-swapped-arguments",
+    "category": "wrong-value",
+    "kind": "swapped arguments in a call",
+    "description": "The range is passed backwards, so the slack is always 0.",
+    "file": "planner/schedule.py",
+    "function": "slack",
+    "old": "    return workdays_between(slots[name].end, min(waiting))",
+    "new": "    return workdays_between(min(waiting), slots[name].end)",
+    "buggy_lines": [
+      64
+    ]
+  },
+  {
+    "id": "p16-partial-traversal",
+    "category": "wrong-value",
+    "kind": "nested function skips part of its input",
+    "description": "Only the first dependency is placed before a task, so later ones can end up after it.",
+    "file": "planner/graph.py",
+    "function": "order.<locals>.place",
+    "old": "        for dep in plan.get(name).after:\n            place(dep)",
+    "new": "        for dep in plan.get(name).after[:1]:\n            place(dep)",
+    "buggy_lines": [
+      47
+    ]
+  },
+  {
+    "id": "p17-recursion-argument",
+    "category": "wrong-value",
+    "kind": "wrong variable in a recursive call",
+    "description": "The recursion restarts from the same task, so only direct dependents are collected.",
+    "file": "planner/graph.py",
+    "function": "_collect_dependents",
+    "old": "            _collect_dependents(plan, child, found)",
+    "new": "            _collect_dependents(plan, name, found)",
+    "buggy_lines": [
+      66
+    ]
+  },
+  {
+    "id": "p18-base-case",
+    "category": "wrong-value",
+    "kind": "wrong recursion base case",
+    "description": "A task that waits for nothing has depth 1 instead of 0, which shifts every depth.",
+    "file": "planner/graph.py",
+    "function": "depth",
+    "old": "        memo[name] = 1 + max(depth(plan, dep, memo) for dep in after) if after else 0",
+    "new": "        memo[name] = 1 + max(depth(plan, dep, memo) for dep in after) if after else 1",
+    "buggy_lines": [
+      81
+    ]
+  },
+  {
+    "id": "p19-wrong-default",
+    "category": "wrong-value",
+    "kind": "wrong default value",
+    "description": "Every owner's total starts at 1 instead of 0.",
+    "file": "planner/workload.py",
+    "function": "load_by_owner",
+    "old": "        load[task.owner] = load.get(task.owner, 0) + task.days",
+    "new": "        load[task.owner] = load.get(task.owner, 1) + task.days",
+    "buggy_lines": [
+      10
+    ]
+  },
+  {
+    "id": "p20-limit-boundary",
+    "category": "wrong-value",
+    "kind": "boundary comparison inside a generator expression",
+    "description": "An owner exactly at the limit is reported as overloaded.",
+    "file": "planner/workload.py",
+    "function": "overloaded",
+    "old": "    return sorted(owner for owner, days in load_by_owner(plan).items() if days > limit)",
+    "new": "    return sorted(owner for owner, days in load_by_owner(plan).items() if days >= limit)",
+    "buggy_lines": [
+      24
+    ]
+  },
+  {
+    "id": "p21-truncation",
+    "category": "wrong-value",
+    "kind": "truncation instead of rounding",
+    "description": "Percentages are cut off instead of rounded.",
+    "file": "planner/report.py",
+    "function": "format_percent",
+    "old": "    return f\"{round(value)}%\"",
+    "new": "    return f\"{int(value)}%\"",
+    "buggy_lines": [
+      17
+    ]
+  },
+  {
+    "id": "p22-sort-direction",
+    "category": "wrong-value",
+    "kind": "wrong sort key (inside a lambda)",
+    "description": "The least important tasks come first.",
+    "file": "planner/report.py",
+    "function": "top_priorities",
+    "old": "    ranked = sorted(plan.open_tasks(), key=lambda task: (-task.weight, task.name))",
+    "new": "    ranked = sorted(plan.open_tasks(), key=lambda task: (task.weight, task.name))",
+    "buggy_lines": [
+      22
+    ]
+  },
+  {
+    "id": "p23-alignment",
+    "category": "wrong-value",
+    "kind": "wrong format specification",
+    "description": "Task labels are right-aligned in the report.",
+    "file": "planner/report.py",
+    "function": "summary_line",
+    "old": "{task.label():<14}",
+    "new": "{task.label():>14}",
+    "buggy_lines": [
+      39
+    ]
+  },
+  {
+    "id": "p24-rounding-direction",
+    "category": "wrong-value",
+    "kind": "round() instead of ceil()",
+    "description": "Buffers are rounded to the nearest day instead of up.",
+    "file": "planner/estimates.py",
+    "function": "Estimator.buffer",
+    "old": "        return math.ceil(self.effort(name) * percent / 100)",
+    "new": "        return round(self.effort(name) * percent / 100)",
+    "buggy_lines": [
+      40
+    ]
+  },
+  {
+    "id": "p25-boolean-logic",
+    "category": "wrong-value",
+    "kind": "and instead of or",
+    "description": "High risk needs both conditions instead of either.",
+    "file": "planner/estimates.py",
+    "function": "Estimator.risk",
+    "old": "        if days >= 15 or chain >= 4:",
+    "new": "        if days >= 15 and chain >= 4:",
+    "buggy_lines": [
+      46
+    ]
+  },
+  {
+    "id": "p26-tag-prefix",
+    "category": "wrong-value",
+    "kind": "wrong slice in the middle of a long function",
+    "description": "Tags keep their leading '#'.",
+    "file": "planner/parser.py",
+    "function": "parse_line",
+    "old": "            tags.append(word[1:])",
+    "new": "            tags.append(word)",
+    "buggy_lines": [
+      75
+    ]
+  },
+  {
+    "id": "p27-module-constant",
+    "category": "wrong-value",
+    "kind": "wrong module-level constant (the fault is outside any function)",
+    "description": "A week has 7 working days. The constant is module-level code, so the best possible answer is the function that uses it.",
+    "file": "planner/parser.py",
+    "function": "parse_duration",
+    "old": "WEEK = 5  # working days",
+    "new": "WEEK = 7  # working days",
+    "hard": "module-level code is not part of any call",
+    "buggy_lines": [
+      15
+    ]
+  },
+  {
+    "id": "p28-generator-numbering",
+    "category": "wrong-value",
+    "kind": "off-by-one inside a generator function",
+    "description": "Line numbers in error messages start at 0. Generator frames are not calls of their own, so the consumer parse_plan is the expected answer.",
+    "file": "planner/parser.py",
+    "function": "iter_lines",
+    "old": "    for number, raw in enumerate(text.splitlines(), 1):",
+    "new": "    for number, raw in enumerate(text.splitlines()):",
+    "accept": [
+      "parse_plan"
+    ],
+    "hard": "generator bodies run inside their consumer's call",
+    "buggy_lines": [
+      94
+    ]
+  },
+  {
+    "id": "p29-accumulator",
+    "category": "state",
+    "kind": "assignment instead of accumulation",
+    "description": "Finished days are overwritten instead of added up.",
+    "file": "planner/models.py",
+    "function": "Plan.complete",
+    "old": "            self.done_days += task.days",
+    "new": "            self.done_days = task.days",
+    "buggy_lines": [
+      95
+    ]
+  },
+  {
+    "id": "p30-shallow-clone",
+    "category": "state",
+    "kind": "copy shares its elements with the original",
+    "description": "The clone holds the same Task objects, so completing a task in the clone also completes it in the original.",
+    "file": "planner/models.py",
+    "function": "Plan.clone",
+    "old": "        other._tasks = {key: replace(task) for key, task in self._tasks.items()}",
+    "new": "        other._tasks = {key: task for key, task in self._tasks.items()}",
+    "hard": "the wrong sharing is invisible in the values clone() returns",
+    "buggy_lines": [
+      117
+    ]
+  },
+  {
+    "id": "p31-mutable-default",
+    "category": "state",
+    "kind": "mutable default argument",
+    "description": "The default list is shared between calls, so results accumulate.",
+    "file": "planner/workload.py",
+    "function": "owners_of",
+    "old": "def owners_of(plan, tag, found=None):",
+    "new": "def owners_of(plan, tag, found=[]):",
+    "buggy_lines": [
+      49
+    ]
+  },
+  {
+    "id": "p32-load-bookkeeping",
+    "category": "state",
+    "kind": "assignment instead of subtraction while mutating",
+    "description": "The owner's remaining load is overwritten, so rebalancing stops too early or too late.",
+    "file": "planner/workload.py",
+    "function": "rebalance",
+    "old": "            load[owner] -= task.days",
+    "new": "            load[owner] = task.days",
+    "buggy_lines": [
+      43
+    ]
+  },
+  {
+    "id": "p33-stale-cache",
+    "category": "state",
+    "kind": "cache key misses a parameter",
+    "description": "Totals for open_only=True and False share one cache entry.",
+    "file": "planner/estimates.py",
+    "function": "Estimator.effort",
+    "old": "        key = (name, open_only)",
+    "new": "        key = name",
+    "buggy_lines": [
+      32
+    ]
+  },
+  {
+    "id": "p34-late-binding",
+    "category": "state",
+    "kind": "closure captures the loop variable late",
+    "description": "Every view tests for the last owner. The lambda runs inside split_by_owner's call.",
+    "file": "planner/workload.py",
+    "function": "owner_views",
+    "old": "        views[owner] = lambda task, owner=owner: task.owner == owner",
+    "new": "        views[owner] = lambda task: task.owner == owner",
+    "accept": [
+      "split_by_owner"
+    ],
+    "hard": "the lambda body runs inside its caller's call",
+    "buggy_lines": [
+      63
+    ]
+  }
+]

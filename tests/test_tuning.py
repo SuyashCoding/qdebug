@@ -164,10 +164,10 @@ def _held_lock():
     return lock
 
 
-def run_tree(project, node_id):
-    from qdebug.runner import invoke
-    data = invoke(str(project), "tree", test=node_id)
-    return next(iter(data["tests"].values()))["nodes"]
+def run_tree(project, node_id, **options):
+    from qdebug.runner import RunOptions, invoke
+    data = invoke(str(project), "tree", test=node_id, options=RunOptions(**options))
+    return next(iter(data["tests"].values())).get("nodes", [])
 
 
 def write_unittest_project(path):
@@ -180,10 +180,17 @@ def write_unittest_project(path):
         "    def test_run(self):\n        self.assertEqual(self.p.run(), 99)\n", encoding="utf-8")
 
 
-def test_unittest_setup_does_not_become_the_root(tmp_path):
+def test_unittest_setup_is_a_call_of_the_test_not_the_root(tmp_path):
     write_unittest_project(tmp_path)
     nodes = run_tree(tmp_path, "test_core.py::T::test_run")
-    assert nodes[0]["qualname"] == "T.test_run"
+    assert [n["qualname"] for n in nodes] == ["T.test_run", "T.setUp", "Parser.__init__", "Parser.run"]
+    assert [n["path"] for n in nodes][1:3] == ["T.test_run/T.setUp#0", "T.test_run/T.setUp#0/Parser.__init__#0"]
+    assert nodes[0]["last_line"] == 10
+
+
+def test_unittest_setup_is_skipped_when_only_the_call_is_traced(tmp_path):
+    write_unittest_project(tmp_path)
+    nodes = run_tree(tmp_path, "test_core.py::T::test_run", trace_setup=False)
     assert [n["qualname"] for n in nodes] == ["T.test_run", "Parser.run"]
     assert nodes[0]["last_line"] == 10
 
@@ -195,3 +202,76 @@ def test_runner_explains_a_missing_pytest(tmp_path):
     (tmp_path / "project").mkdir()
     with pytest.raises(RunnerError, match="pytest is not installed"):
         invoke(str(tmp_path / "project"), "plain", options=RunOptions(python=str(tmp_path / "env")))
+
+
+# ---------------------------------------------- rules added for wider bugs
+
+def leader_tree(callees):
+    return make_tree(("test", [("lead", [(f"c{i}", []) for i in range(callees)]), ("other", [])]))
+
+
+def lead_prior(func):
+    return 0.9 if func == "m.py::lead" else 0.05
+
+
+def test_a_wrong_leader_with_many_callees_goes_to_the_line_search():
+    tree = leader_tree(6)
+    tree.hints = SearchHints(zoom_fanout=5)
+    strategy = InfoGainStrategy(lead_prior)
+    strategy.escalation_exhausted = True
+    assert strategy.next_question(tree, {}).qualname == "lead"   # asked about first
+    assert strategy.next_question(tree, {"test/lead#0": "no"}) is None
+    assert strategy.stop_reason == "fan-out"
+
+
+def test_a_wrong_leader_with_few_callees_is_settled_by_asking_them():
+    tree = leader_tree(2)
+    tree.hints = SearchHints(zoom_fanout=5, settle_leader=True)
+    strategy = InfoGainStrategy(flat)
+    strategy.escalation_exhausted = True
+    answers = {"test/lead#0": "no"}
+    first = strategy.next_question(tree, answers)
+    assert first.qualname in ("c0", "c1")
+    answers[first.path] = "yes"
+    second = strategy.next_question(tree, answers)
+    answers[second.path] = "yes"
+    assert {first.qualname, second.qualname} == {"c0", "c1"}
+    assert strategy.next_question(tree, answers) is None
+    assert strategy.stop_reason == "certified"
+
+
+def test_crash_chain_follows_the_exception_down():
+    from qdebug.tree import crash_chain
+    tree = make_tree(("test", [("a", [("b", []), ("c", [("d", [])])]), ("e", [])]))
+    for i in (0, 1, 3, 4):
+        tree.nodes[i].raised = "KeyError"
+    assert [n.qualname for n in crash_chain(tree)] == ["a", "c", "d"]
+    tree.nodes[0].raised = "AssertionError"   # the test's own assertion failed
+    assert crash_chain(tree) == []
+
+
+def test_bug_kinds_adjust_the_tuned_policy():
+    from qdebug.tuning import BUG_KINDS, BUG_PROFILES
+    assert set(BUG_PROFILES) == set(BUG_KINDS)
+    assert resolve_tuning("tuned", bug_kind="state").assertion_weight == 1.0
+    assert resolve_tuning("tuned", bug_kind="crash").crash_boost == 8.0
+    assert resolve_tuning("tuned", bug_kind="wrong-value") == POLICIES["tuned"]
+    with pytest.raises(ValueError):
+        resolve_tuning("tuned", bug_kind="cosmic-ray")
+
+
+def write_fixture_project(path):
+    (path / "core.py").write_text(
+        "def load(name):\n    return {'a': 1}[name]\n\n\ndef use(x):\n    return x + 1\n", encoding="utf-8")
+    (path / "test_core.py").write_text(
+        "import pytest\nfrom core import load, use\n\n\n@pytest.fixture\ndef value():\n"
+        "    return load('b')\n\n\ndef test_use(value):\n    assert use(value) == 2\n", encoding="utf-8")
+
+
+def test_project_code_called_by_a_fixture_is_part_of_the_tree(tmp_path):
+    write_fixture_project(tmp_path)
+    nodes = run_tree(tmp_path, "test_core.py::test_use")
+    assert [n["path"] for n in nodes] == ["test_use", "test_use/value#0", "test_use/value#0/load#0"]
+    assert nodes[1]["call_line"] is None              # made by pytest, not by a line of the test
+    assert nodes[2]["raised"] == "KeyError"            # the exception's path is recorded
+    assert run_tree(tmp_path, "test_core.py::test_use", trace_setup=False) == []

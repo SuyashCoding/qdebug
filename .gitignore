@@ -1,8 +1,26 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Tools
 .pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# qdebug output
 session_*.json
-demo/work/
+.qdebug/sessions/
+
+# Generated benchmark variants (python -m qdebug variants)
+benchmarks/*/variants/
+
+# Local-only material
 demo/
 PRESENTATION_SCRIPT*.md
 *.pptx

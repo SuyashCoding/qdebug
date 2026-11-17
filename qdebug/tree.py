@@ -46,6 +46,8 @@ class Node:
     incomplete: bool = False
     call_line: int | None = None   # line in the parent that made this call
     last_line: int | None = None   # root only: the line the test was on when it ended
+    raised: str | None = None      # type name of the exception the call ended with, if any
+    closure: list = field(default_factory=list)  # inputs that are variables of the enclosing function
     depth: int = 0
 
     @property
@@ -60,7 +62,8 @@ class Node:
             monitored=d["monitored"], own_lines=[tuple(x) for x in d.get("own_lines", [])],
             args=d.get("args"), after=d.get("after"), mutated=d.get("mutated", []),
             ret=d.get("ret"), exc=d.get("exc"), incomplete=d.get("incomplete", False),
-            call_line=d.get("call_line"), last_line=d.get("last_line"),
+            call_line=d.get("call_line"), last_line=d.get("last_line"), raised=d.get("raised"),
+            closure=d.get("closure", []),
         )
 
     # -- values ---------------------------------------------------------
@@ -115,6 +118,9 @@ class SearchHints:
     repeat_discount: float = 1.0          # factor per "yes" about another call of the function
     test_funcs: frozenset = frozenset()   # function keys that may never be the reported bug
     evidence_stop: bool = False           # "confident" needs a "no" about the blamed function
+    zoom_fanout: int = 0                  # a wrong call with this many open callees goes to zoom
+    settle_leader: bool = False           # ask the open callees of a wrong leading hypothesis first
+    answer_error: dict = field(default_factory=dict)  # {path: error rate} of answers with a confidence
 
 
 class ExecutionTree:
@@ -161,6 +167,31 @@ class ExecutionTree:
 
     def monitored_count(self):
         return sum(1 for n in self.nodes if n.monitored)
+
+
+# how a test ends when an assertion fails, as opposed to code under test raising
+ASSERTION_FAILURES = frozenset({"AssertionError", "Failed"})
+
+
+def crash_chain(tree):
+    """The calls the test's fatal exception travelled through, outermost first.
+
+    Empty when the test failed on an assertion of its own. Otherwise the chain
+    follows, from the test down, the last callee that ended with an exception;
+    its last element is the call in which the exception started. The test
+    itself is not part of the chain. A test whose fixture failed never ran, so
+    it has no exception of its own and the chain starts at the fixture.
+    """
+    node = tree.root
+    if node.raised in ASSERTION_FAILURES:
+        return []
+    chain = []
+    while True:
+        raising = [child for child in tree.children(node) if child.raised]
+        if not raising:
+            return chain
+        node = raising[-1]
+        chain.append(node)
 
 
 def node_status(node, answers):

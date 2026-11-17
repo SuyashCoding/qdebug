@@ -474,8 +474,7 @@ def session_row(session, targets, locations):
 # ------------------------------------------------------------ reporting
 
 def _num(values):
-    vals = [float(v) for v in values if v not in ("", None)]
-    return vals
+    return [float(v) for v in values if v not in ("", None)]
 
 
 def _pct(values):

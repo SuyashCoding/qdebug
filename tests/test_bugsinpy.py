@@ -2,8 +2,15 @@
 
 import pytest
 
-from qdebug.bugsinpy import (buggy_functions, parse_tests, patch_locations, python_version,
-                             requirements, select_bugs, unittest_to_nodeid)
+from qdebug.bugsinpy import (
+    buggy_functions,
+    parse_tests,
+    patch_locations,
+    python_version,
+    requirements,
+    select_bugs,
+    unittest_to_nodeid,
+)
 from qdebug.session import DebugSession, SessionConfig, SessionError
 from qdebug.spectrum import scan_functions
 
@@ -72,7 +79,8 @@ def test_requirements(tmp_path):
         "attrs==19.3.0\nthefuck==3.29\n-e git+https://x/y#egg=z\npkg-resources==0.0.0\n\nmock==4.0.2\n")
     (tmp_path / "setup.sh").write_text("python setup.py install\npip3 install nose\npip install -U flake8\n")
     assert requirements(str(tmp_path), "PySnooper") == [
-        "attrs==19.3.0", "mock==4.0.2", "nose", "flake8", "python_toolbox", "future", "six", "pytest<7", "setuptools<60"]
+        "attrs==19.3.0", "mock==4.0.2", "nose", "flake8", "python_toolbox", "future", "six", "pytest<7",
+        "setuptools<60"]
     (tmp_path / "requirements.txt").write_text("pytest==5.4.2\nsetuptools==44.0.0\n")
     (tmp_path / "setup.sh").unlink()
     assert requirements(str(tmp_path)) == ["pytest==5.4.2", "setuptools==44.0.0"]

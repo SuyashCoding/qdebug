@@ -1,7 +1,8 @@
-"""Batch experiments: every bug x strategy x noise level x seed.
+"""Batch experiments on benchmark suites: every bug x strategy x noise level x seed.
 
 Uses the GroundTruthOracle (wrapped in a NoisyOracle when noise > 0) and
-writes results/results.csv plus results/summary.md.
+writes results/<suite>/results.csv plus results/<suite>/summary.md. Suites are
+described in suites.py.
 
 Traced runs are deterministic, so their results are cached per
 (project, mode, test, monitored set, target): each distinct traced
@@ -10,24 +11,22 @@ needs it. With noise 0 the seed has no effect, so only seed 0 is run.
 """
 
 import csv
-import json
 import os
 import statistics
-import subprocess
-import sys
 import time
 
-from qdebug.oracles import GroundTruthOracle, NoisyOracle
+from qdebug.oracles import ConfidentNoisyOracle, GroundTruthOracle, NoisyOracle
 from qdebug.ranking import DEFAULT_TIERS
 from qdebug.runner import invoke
 from qdebug.session import DebugSession, SessionConfig
+from qdebug.suites import ensure_variants
 
 FIELDS = [
-    "bug", "strategy", "noise", "seed", "test", "target_function", "reported_function",
+    "suite", "bug", "category", "policy", "strategy", "noise", "seed", "test", "target_function", "reported_function",
     "found_function", "found_before_zoom", "func_questions", "line_questions",
     "line_in_region", "region_size", "region_lines", "zoom_status", "zoom_attempts",
     "tiers_used", "final_tier", "nodes_total", "nodes_monitored", "untraced_ms",
-    "traced_ms_per_tier", "sbfl_func_rank", "sbfl_line_rank", "stop_reason", "flips",
+    "traced_ms_per_tier", "sbfl_func_rank", "sbfl_line_rank", "stop_reason", "basis", "flips",
 ]
 
 
@@ -49,34 +48,27 @@ class RunCache:
         return self.cache[key]
 
 
-def ensure_variants(bugs_path, variants_dir):
-    missing = [b["id"] for b in load_bugs(bugs_path)
-               if not os.path.isdir(os.path.join(variants_dir, b["id"]))]
-    if missing:
-        script = os.path.join(os.path.dirname(os.path.abspath(bugs_path)), "make_variants.py")
-        subprocess.run([sys.executable, script, "--bugs", bugs_path, "--dest", variants_dir],
-                       check=True)
-
-
-def load_bugs(path):
-    with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
-
-
 def evaluate_one(bug, strategy, noise, seed, cache, fixed, variants_dir,
-                 tiers=DEFAULT_TIERS, error_rate=0.1, budget=30, **overrides):
+                 tiers=DEFAULT_TIERS, error_rate=0.1, budget=30, triage="none", noise_model="flip",
+                 overconfidence=1.0, **overrides):
+    """One session on one seeded bug. triage="category" tunes it for the bug's labelled kind."""
     project = os.path.join(variants_dir, bug["id"])
+    if triage == "category" and bug.get("category"):
+        overrides.setdefault("bug_kind", bug["category"])
     config = SessionConfig(project=project, strategy=strategy, tiers=tiers,
                            error_rate=error_rate, budget=budget, **overrides)
     session = DebugSession(config, oracle=None, run=cache, out=lambda *a, **k: None)
     session.prepare()
     oracle = GroundTruthOracle(fixed, session.test_id, run=cache)
-    if noise > 0:
+    if noise > 0 and noise_model == "confident":
+        oracle = ConfidentNoisyOracle(oracle, noise, seed, overconfidence)
+    elif noise > 0:
         oracle = NoisyOracle(oracle, noise, seed)
     session.oracle = oracle
     session.run_session()
 
     target = f"{bug['file']}::{bug['function']}"
+    accepted = {target} | {f"{bug['file']}::{name}" for name in bug.get("accept", [])}
     found = session.found
     before = session.ranked_before_zoom[0][0] if session.ranked_before_zoom else None
     zoom = session.zoom
@@ -85,11 +77,13 @@ def evaluate_one(bug, strategy, noise, seed, cache, fixed, variants_dir,
     ranking = session.ranking
     line_ranks = [r for r in (ranking.line_rank(bug["file"], n) for n in bug["buggy_lines"]) if r]
     return {
-        "bug": bug["id"], "strategy": strategy, "noise": noise, "seed": seed,
+        "suite": os.path.basename(os.path.dirname(os.path.abspath(variants_dir))),
+        "bug": bug["id"], "category": bug.get("category", ""), "policy": config.policy,
+        "strategy": strategy, "noise": noise, "seed": seed,
         "test": session.test_id, "target_function": target,
         "reported_function": found.func if found else "",
-        "found_function": int(bool(found and found.func == target)),
-        "found_before_zoom": int(bool(before and before.func == target)),
+        "found_function": int(bool(found and found.func in accepted)),
+        "found_before_zoom": int(bool(before and before.func in accepted)),
         "func_questions": session.questions_asked,
         "line_questions": sum(z.questions for z in session.zoom_results),
         "line_in_region": int(in_region),
@@ -107,16 +101,17 @@ def evaluate_one(bug, strategy, noise, seed, cache, fixed, variants_dir,
         "sbfl_func_rank": ranking.function_rank(target),
         "sbfl_line_rank": min(line_ranks) if line_ranks else "",
         "stop_reason": session.stop_reason,
+        "basis": session.basis,
         "flips": getattr(oracle, "flips", 0),
     }
 
 
-def run_evaluation(bugs_path="bugs.json", fixed="sample_project", variants_dir="variants",
-                   strategies=("infogain", "topdown", "divide"), noise_levels=(0.0, 0.1, 0.2),
-                   seeds=10, out_dir="results", tiers=DEFAULT_TIERS, error_rate=0.1, budget=30,
-                   log=print, policy="baseline"):
-    ensure_variants(bugs_path, variants_dir)
-    bugs = load_bugs(bugs_path)
+def run_suite(suite, strategies=("infogain", "topdown", "divide"), noise_levels=(0.0, 0.1, 0.2),
+              seeds=10, out_dir="results", tiers=DEFAULT_TIERS, error_rate=0.1, budget=30,
+              log=print, policy="tuned", bug_ids=None, **overrides):
+    """Evaluate one suite and write <out_dir>/<suite name>/results.csv and summary.md."""
+    ensure_variants(suite)
+    bugs = [b for b in suite.bugs() if not bug_ids or b["id"] in bug_ids]
     cache = RunCache()
     rows = []
     start = time.perf_counter()
@@ -124,27 +119,37 @@ def run_evaluation(bugs_path="bugs.json", fixed="sample_project", variants_dir="
         for strategy in strategies:
             for noise in noise_levels:
                 for seed in (range(seeds) if noise > 0 else [0]):
-                    row = evaluate_one(bug, strategy, noise, seed, cache, fixed, variants_dir,
-                                       tiers, error_rate, budget, policy=policy)
-                    rows.append(row)
+                    rows.append(evaluate_one(bug, strategy, noise, seed, cache, suite.project,
+                                             suite.variants, tiers, error_rate, budget,
+                                             policy=policy, **overrides))
             done = [r for r in rows if r["bug"] == bug["id"] and r["strategy"] == strategy]
-            log(f"{bug['id']} {strategy:<9} runs={len(done):>3} "
+            log(f"{suite.name}/{bug['id']} {strategy:<9} runs={len(done):>3} "
                 f"found={sum(r['found_function'] for r in done)}/{len(done)} "
                 f"line={sum(r['line_in_region'] for r in done)}/{len(done)} "
                 f"meanQ={statistics.mean(r['func_questions'] for r in done):.1f}")
-    os.makedirs(out_dir, exist_ok=True)
-    csv_path = os.path.join(out_dir, "results.csv")
-    with open(csv_path, "w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=FIELDS)
-        writer.writeheader()
-        writer.writerows(rows)
-    timing = timing_table(bugs, cache, variants_dir, rows)
-    summary = summarize(rows, bugs, strategies, noise_levels, seeds, error_rate, timing)
-    md_path = os.path.join(out_dir, "summary.md")
-    with open(md_path, "w", encoding="utf-8") as fh:
-        fh.write(summary)
-    log(f"\n{len(rows)} sessions, {cache.misses} distinct traced runs, "
-        f"{time.perf_counter() - start:.0f}s. Wrote {csv_path} and {md_path}")
+    if out_dir:
+        target = os.path.join(out_dir, suite.name)
+        os.makedirs(target, exist_ok=True)
+        csv_path = os.path.join(target, "results.csv")
+        with open(csv_path, "w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(fh, fieldnames=FIELDS)
+            writer.writeheader()
+            writer.writerows(rows)
+        timing = timing_table(bugs, cache, suite.variants, rows)
+        md_path = os.path.join(target, "summary.md")
+        with open(md_path, "w", encoding="utf-8") as fh:
+            fh.write(summarize(rows, bugs, strategies, noise_levels, seeds, error_rate, timing,
+                               title=f"qdebug evaluation: {suite.name} ({policy} policy)"))
+        log(f"{suite.name}: {len(rows)} sessions, {cache.misses} distinct traced runs, "
+            f"{time.perf_counter() - start:.0f}s. Wrote {csv_path} and {md_path}")
+    return rows
+
+
+def run_evaluation(suites, **options):
+    """run_suite for every suite; returns all rows."""
+    rows = []
+    for suite in suites:
+        rows += run_suite(suite, **options)
     return rows
 
 
@@ -180,8 +185,9 @@ def _pct(values):
     return f"{100 * sum(values) / len(values):.0f}%" if values else "-"
 
 
-def summarize(rows, bugs, strategies, noise_levels, seeds, error_rate, timing):
-    out = ["# qdebug evaluation summary", ""]
+def summarize(rows, bugs, strategies, noise_levels, seeds, error_rate, timing,
+              title="qdebug evaluation summary"):
+    out = [f"# {title}", ""]
     out.append(f"{len(bugs)} seeded bugs x {len(strategies)} strategies x noise "
                f"{', '.join(str(n) for n in noise_levels)} ({seeds} seeds per noise level > 0; "
                f"noise 0 is deterministic and run once). GroundTruthOracle, assumed error rate "
@@ -208,7 +214,7 @@ def summarize(rows, bugs, strategies, noise_levels, seeds, error_rate, timing):
                 f"| {_mean(r['final_tier'] for r in sel):.0f} "
                 f"| {_mean(r['nodes_monitored'] for r in sel):.0f} / {_mean(r['nodes_total'] for r in sel):.0f} |")
     out.append("")
-    out.append("## Per-bug results (noise 0)")
+    out.append(f"## Per-bug results (noise {noise_levels[0]})")
     out.append("")
     header = "| bug | buggy function | SBFL function rank | SBFL line rank |"
     sep = "|---|---|---|---|"
@@ -233,6 +239,20 @@ def summarize(rows, bugs, strategies, noise_levels, seeds, error_rate, timing):
     out.append("")
     out.append("Q is function-level + line-level questions; found = reported function is the buggy one; "
                "line = a true buggy line is inside the reported region.")
+    categories = sorted({b.get("category", "") for b in bugs} - {""})
+    if len(categories) > 1:
+        out += ["", f"## Per bug category (noise {noise_levels[0]})", ""]
+        out.append("| category | bugs |" + "".join(f" {s}: found / line / mean Q |" for s in strategies))
+        out.append("|---|---|" + "---|" * len(strategies))
+        for category in categories:
+            line = f"| {category} | {sum(1 for b in bugs if b.get('category') == category)} |"
+            for s in strategies:
+                sel = [r for r in rows if r["category"] == category and r["strategy"] == s
+                       and r["noise"] == noise_levels[0]]
+                line += (f" {sum(r['found_function'] for r in sel)}/{len(sel)} / "
+                         f"{sum(r['line_in_region'] for r in sel)}/{len(sel)} / "
+                         f"{_mean(r['func_questions'] + r['line_questions'] for r in sel):.1f} |")
+            out.append(line)
     noisy = [n for n in noise_levels if n > 0]
     if noisy:
         out.append("")

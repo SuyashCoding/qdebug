@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qdebug"
+dynamic = ["version"]
+description = "Find the line behind a failing pytest test by answering yes/no questions, yourself or with Claude."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Suyash Patel" }]
+requires-python = ">=3.10"
+keywords = ["debugging", "pytest", "fault-localization", "algorithmic-debugging", "testing", "claude"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Debuggers",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = [
+    "pytest>=7",
+    "rich>=13",
+]
+
+[project.optional-dependencies]
+ai = ["anthropic>=2.9"]
+dev = ["ruff>=0.6", "build"]
+
+[project.scripts]
+qdebug = "qdebug.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/SuyashCoding/qdebug"
+Issues = "https://github.com/SuyashCoding/qdebug/issues"
+
+[tool.setuptools]
+packages = ["qdebug", "qdebug.ai"]
+
+[tool.setuptools.dynamic]
+version = { attr = "qdebug.__version__" }
+
+[tool.setuptools.package-data]
+"qdebug.ai" = ["*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]
+norecursedirs = ["benchmarks", "results", "fixtures", ".git", "__pycache__", "build", "dist"]
+markers = [
+    "e2e: end-to-end tests that run seeded bugs in subprocesses (slower)",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["benchmarks", "tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "C4", "PIE", "RET"]
+ignore = [
+    "E731",    # small local lambdas are used on purpose
+    "E741",    # short names in comprehensions
+    "SIM108",  # ternaries are not always clearer
+    "RET505",  # explicit else branches read better in the tracers
+    "B904",    # `from None` is applied where the cause is noise
+    "B905",    # zip(strict=) does not exist on the Python 3.8 the tracer supports
+    "SIM105",  # explicit try/except/pass reads better than contextlib.suppress here
+    "RET503",  # functions that fall through to None on purpose
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["qdebug", "helpers"]
+
+[tool.ruff.lint.per-file-ignores]
+# these three run inside the project's interpreter, which may be Python 3.8
+"qdebug/runner.py" = ["UP"]
+"qdebug/plugin.py" = ["UP"]
+"qdebug/tracer.py" = ["UP"]
+"tests/*" = ["B011", "SIM117"]

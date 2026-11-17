@@ -8,7 +8,7 @@ from datetime import datetime
 from qdebug.tracer import truncate
 
 
-def build_report(session):
+def build_report(session, assistant=None):
     """Collect everything worth keeping from a finished session into a dict."""
     cfg = session.config
     tree = session.tree
@@ -72,7 +72,13 @@ def build_report(session):
         "nodes_total": len(tree),
         "nodes_monitored": tree.monitored_count(),
         "tree": session.render_tree(found.id if found is not None and found.path in tree.by_path else None),
+        "bug_kind": session.config.bug_kind or (session.triage.bug_kind if session.triage else None),
+        "ai": None,
     }
+    if assistant is not None:
+        report["ai"] = dict(assistant.report(),
+                            triage=session.triage.as_dict() if session.triage else None,
+                            explanation=session.explanation.as_dict() if session.explanation else None)
     if zoom is not None:
         report["zoom"] = {
             "path": zoom.path, "status": zoom.status, "checkpoints": zoom.checkpoints,
@@ -89,6 +95,16 @@ def format_report(report):
     out += [bar, f"qdebug report — {report['test']}", bar]
     out.append(f"strategy: {report['strategy']}   oracle: {report['oracle']}   "
                f"stopped: {report['stop_reason']}")
+    ai = report.get("ai")
+    if ai:
+        usage = ai["usage"]
+        line = (f"claude: {ai['model']} ({ai['effort']} effort), {usage['requests']} requests, "
+                f"{usage['input_tokens'] + usage['cache_read_tokens']} input / {usage['output_tokens']} "
+                f"output tokens; prompt: {ai['agent']}")
+        out.append(line)
+        if ai.get("triage"):
+            t = ai["triage"]
+            out.append(f"triage: {t['bug_kind']} bug; suspects: {', '.join(t['suspects']) or '-'}; {t['reason']}")
     if report["basis"] != "answers":
         out.append("low confidence: the questions did not settle it; "
                    + ("this is SBFL's best guess" if report["basis"] == "sbfl"
@@ -127,6 +143,16 @@ def format_report(report):
         out.append(f"  region ({len(zoom['region'])} line(s)) in {zoom['file']}:")
         for row in zoom["ranked_lines"]:
             out.append(f"    line {row['line']:>4}  ochiai {row['ochiai']:.3f}  {row['text']}")
+    ai = report.get("ai")
+    if ai and ai.get("explanation"):
+        exp = ai["explanation"]
+        out.append(f"Claude's explanation ({ai['model']}, confidence {exp['confidence']}):")
+        out.append(f"  {exp['summary']}")
+        if exp["explanation"]:
+            out.append(f"  {exp['explanation']}")
+        if exp["fix"].strip():
+            out.append("  suggested fix:")
+            out += [f"    {line}" for line in exp["fix"].splitlines()]
     out.append("")
     out.append(f"Questions: {report['questions']} function-level, {report['line_questions']} line-level")
     out.append("Transcript:")

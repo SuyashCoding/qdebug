@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check qdebug tests
+
+  test:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[ai]"
+      - name: Unit tests
+        run: python -m pytest -m "not e2e" -q
+      - name: End-to-end tests (seeded bugs, subprocesses)
+        if: matrix.python == '3.12'
+        run: python -m pytest -m e2e -q
+
+  package:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - name: Install the wheel without the AI extra and run it from outside the repository
+        run: |
+          python -m venv /tmp/venv
+          /tmp/venv/bin/pip install dist/*.whl
+          cd /tmp && /tmp/venv/bin/qdebug --version
+          /tmp/venv/bin/qdebug debug --project "$GITHUB_WORKSPACE/benchmarks/shop/project" --plain --save-dir "" \
+            && exit 1 || echo "no failing test: exits with an error, as expected"

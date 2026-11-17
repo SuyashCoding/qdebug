@@ -1,14 +1,15 @@
 """The debugging session: spectrum -> tiered tree -> questions -> zoom -> report."""
 
+import difflib
 from dataclasses import dataclass, field
 
 from qdebug.belief import Belief
 from qdebug.oracles import Question
 from qdebug.ranking import DEFAULT_TIERS, Ranking
-from qdebug.runner import invoke
+from qdebug.runner import RunnerError, invoke
 from qdebug.spectrum import collect_spectrum, read_source_lines, scan_functions
 from qdebug.strategies import ESCALATE, InfoGainStrategy, make_strategy
-from qdebug.tree import ExecutionTree, SearchHints, render_tree
+from qdebug.tree import ExecutionTree, SearchHints, crash_chain, render_tree
 from qdebug.tuning import LOW_CONFIDENCE_STOPS, assertion_cut, resolve_tuning
 from qdebug.zoom import REFUTED_INPUTS, REFUTED_OUTPUT, zoom_into
 
@@ -32,6 +33,11 @@ class SessionConfig:
     policy: str = "baseline"       # conditional search rules, see tuning.py
     assertion_weight: float | None = None  # override the policy's knob
     repeat_discount: float | None = None   # override the policy's knob
+    bug_kind: str | None = None    # adjust the policy for one kind of bug (tuning.BUG_KINDS)
+    confidence_use: str = "floor"  # stated confidences: "floor" (only weaken), "raw", "ignore"
+    min_line_confidence: float = 0.0  # line answers below this confidence count as "unknown"
+    zoom_search: str | None = None  # line search "binary" or "bayes" (default: the policy's)
+    suspect_boost: float = 2.0     # prior multiplier for functions the AI triage names
 
 
 @dataclass
@@ -48,6 +54,7 @@ class LogEntry:
     summary: dict = field(default_factory=dict)
     note: str = ""
     source: str = "oracle"     # "oracle" (call question) or "zoom" (end/entry check)
+    error: float | None = None  # this answer's own error rate (from a stated confidence)
 
 
 class SessionError(RuntimeError):
@@ -70,10 +77,29 @@ class DebugSession:
         self.zoom_results = []
         self.limits_hit = {}
         self.spectrum = None
-        self.tuning = resolve_tuning(config.policy, config.assertion_weight, config.repeat_discount)
+        self.tuning = resolve_tuning(config.policy, config.assertion_weight, config.repeat_discount,
+                                     config.bug_kind)
         # how the final answer was reached: "answers", "sbfl" (best guess after
         # a search that ended without evidence) or "no_project_code"
         self.basis = "answers"
+        self.suspects = frozenset()  # function keys the AI triage named
+        self.triage = None           # the AI triage result, if one ran
+        self.explanation = None      # the AI explanation of the result, if one ran
+        self.ranked_before_zoom = []
+        self.found = None
+        self.zoom = None
+
+    def apply_triage(self, triage):
+        """Adopt an AI triage: its bug kind adjusts the tuning, its suspects the prior.
+
+        Must be called before the search starts. An explicit --bug-kind wins.
+        """
+        self.triage = triage
+        cfg = self.config
+        if cfg.bug_kind is None and triage.bug_kind:
+            self.tuning = resolve_tuning(cfg.policy, cfg.assertion_weight, cfg.repeat_discount,
+                                         triage.bug_kind)
+        self.suspects = frozenset(f for f in triage.suspects if f in self.ranking.functions)
 
     # ------------------------------------------------------------------ setup
     def collect(self):
@@ -98,6 +124,8 @@ class DebugSession:
             if not matches:
                 raise SessionError(f"{cfg.test} is not a failing test; failing: {failing}")
             self.test_id = matches[0]
+        elif self.tuning.focus_test:
+            self.test_id = self.focused_test().nodeid
         else:
             self.test_id = failing[0]
         self.failure_text = self.spectrum.tests[self.test_id].failure
@@ -107,6 +135,93 @@ class DebugSession:
             cfg.strategy, self.ranking.suspiciousness, error_rate=cfg.error_rate,
             threshold=cfg.threshold, min_gain=cfg.min_gain, stop_level=cfg.stop_level)
         self._file_lines = {}
+
+    def ranked_failing(self):
+        """The failing tests, the cheapest to debug first.
+
+        A test that runs little project code has a small execution tree, so
+        it needs few questions; a test that runs none (it fails in the test
+        file itself) cannot be debugged at all and goes last.
+        """
+        def size(test):
+            covered = sum(1 for func in test.functions if func in self.ranking.functions)
+            return (covered == 0, covered)
+
+        failing = self.spectrum.failing
+        order = {test.nodeid: i for i, test in enumerate(failing)}
+        return sorted(failing, key=lambda test: (size(test), order[test.nodeid]))
+
+    def focused_test(self):
+        return self.ranked_failing()[0]
+
+    def passing_examples(self, func, like=None, limit=3, tests=3, pool=30):
+        """Calls of func recorded in passing tests: [(inputs, output text, test id)].
+
+        Passing tests show the function behaving as the tests expect, so their
+        calls are the best evidence of its intended behaviour (unless a bug
+        is masked there). The smallest passing tests that run func are traced
+        once each, with every function monitored, and kept for the session.
+        like: a call whose inputs the examples should resemble most (they are
+        ranked by textual similarity of their inputs to its inputs).
+        """
+        if not hasattr(self, "_examples"):
+            self._examples, self._passing_trees = {}, {}
+        if func not in self._examples:
+            covering = sorted((t for t in self.spectrum.passing if func in t.functions),
+                              key=lambda t: (len(t.functions), t.nodeid))[:tests]
+            found, seen = [], set()
+            for test in covering:
+                tree = self._passing_tree(test.nodeid)
+                for node in tree.nodes if tree is not None else []:
+                    if node.func != func or node.args is None or node.memo_key() in seen:
+                        continue
+                    seen.add(node.memo_key())
+                    found.append(({k: v["short"] for k, v in node.args.items()},
+                                  node.output_summary(width=self.config.max_repr), test.nodeid))
+                    if len(found) >= pool:
+                        break
+            self._examples[func] = found
+        found = self._examples[func]
+        if like is not None and like.args is not None:
+            # the same inputs say nothing new, and when the bug is masked in a
+            # passing test they repeat the wrong output as if it were right
+            same = {k: v["short"] for k, v in like.args.items()}
+            found = [e for e in found if e[0] != same]
+        if like is None or like.args is None or len(found) <= limit:
+            return found[:limit]
+        target = " ".join(f"{k}={v['short']}" for k, v in like.args.items() if k != "self")
+
+        def similarity(example):
+            text = " ".join(f"{k}={v}" for k, v in example[0].items() if k != "self")
+            return difflib.SequenceMatcher(None, target, text).ratio()
+
+        order = {id(e): i for i, e in enumerate(found)}
+        return sorted(found, key=lambda e: (-similarity(e), order[id(e)]))[:limit]
+
+    def _passing_tree(self, nodeid):
+        if nodeid not in self._passing_trees:
+            tree = None
+            try:
+                data = self.run(self.config.project, "tree", test=nodeid, monitored=None,
+                                max_repr=self.config.max_repr)
+                record = next(iter(data["tests"].values()))
+                if record.get("outcome") == "passed" and record.get("nodes"):
+                    tree = ExecutionTree.from_json(record["nodes"], nodeid)
+            except (RunnerError, StopIteration):
+                tree = None
+            self._passing_trees[nodeid] = tree
+        return self._passing_trees[nodeid]
+
+    def format_examples(self, node):
+        """Text for the human oracle's "e" command."""
+        examples = self.passing_examples(node.func, like=node)
+        if not examples:
+            return "  no calls of this function were recorded in passing tests"
+        lines = [f"  {node.qualname} in passing tests:"]
+        for args, output, test in examples:
+            shown = ", ".join(f"{k}={v}" for k, v in args.items())
+            lines.append(f"    ({shown}) {output}    [{test.split('::')[-1]}]")
+        return "\n".join(lines)
 
     def file_lines(self, relfile):
         if relfile not in self._file_lines:
@@ -121,9 +236,29 @@ class DebugSession:
         tuning = self.tuning
         tests = frozenset(n.func for n in tree.nodes
                           if tuning.exclude_tests and self._is_test(n.func))
-        return SearchHints(prior_scale=self._assertion_scale(tree),
+        return SearchHints(prior_scale=self._prior_scale(tree),
                            repeat_discount=tuning.repeat_discount, test_funcs=tests,
-                           evidence_stop=tuning.evidence_stop)
+                           evidence_stop=tuning.evidence_stop, zoom_fanout=tuning.zoom_fanout,
+                           settle_leader=tuning.settle_leader)
+
+    def _prior_scale(self, tree):
+        """Per-call prior multipliers from the tuning rules, or None if none applies."""
+        scale = self._assertion_scale(tree)
+        if self.suspects and self.config.suspect_boost != 1.0:
+            scale = scale or [1.0] * len(tree)
+            for node in tree.nodes:
+                if node.func in self.suspects:
+                    scale[node.id] *= self.config.suspect_boost
+        boost = self.tuning.crash_boost
+        chain = crash_chain(tree) if boost > 1.0 else []
+        if chain:
+            scale = scale or [1.0] * len(tree)
+            # the call where the exception started gets the full boost, the
+            # calls it travelled through the square root of it
+            for node in chain[:-1]:
+                scale[node.id] *= boost ** 0.5
+            scale[chain[-1].id] *= boost
+        return scale
 
     def _is_test(self, func):
         info = self.functions.get(func)
@@ -202,6 +337,16 @@ class DebugSession:
         return eff
 
     def answers(self):
+        """{path: verdict}. Also refreshes the per-answer error rates the belief model reads."""
+        if self.tree is not None:
+            errors = self.tree.hints.answer_error
+            errors.clear()
+            for entry in self.log:
+                if entry.kind == "answer":
+                    if entry.error is None:
+                        errors.pop(entry.path, None)
+                    else:
+                        errors[entry.path] = entry.error
         return {p: v for p, (v, _) in self.effective_answers().items()}
 
     @property
@@ -290,7 +435,7 @@ class DebugSession:
                     self.build_tree()
                     self.events.append({"after_question": self.questions_asked, "from": old,
                                         "to": self.tier, "reason": self.strategy.escalate_reason})
-                    self.out(f"  ↑ escalating monitoring tier {old}% -> {self.tier}% "
+                    self.out(f"  escalating monitoring tier {old}% -> {self.tier}% "
                              f"({self.strategy.escalate_reason}); {len(self.tree)} calls, "
                              f"{self.tree.monitored_count()} monitored")
                 else:
@@ -320,8 +465,22 @@ class DebugSession:
         self.log.append(LogEntry(
             kind="trust" if answer.action == "trust" else "answer", path=node.path,
             func=node.func, verdict=verdict, tier=self.tier, number=question.number,
-            memo_key=node.memo_key(), summary=self._summary(node), note=answer.note))
+            memo_key=node.memo_key(), summary=self._summary(node), note=answer.note,
+            error=self._answer_error(answer.confidence)))
         return answer
+
+    def _call_error(self, path):
+        """The error rate of the latest oracle answer about path, if it stated a confidence."""
+        for entry in reversed(self.log):
+            if entry.path == path and entry.kind == "answer":
+                return entry.error
+        return None
+
+    def _answer_error(self, confidence):
+        use = self.config.confidence_use
+        if use == "ignore":
+            return None
+        return answer_error(confidence, self.config.error_rate if use == "floor" else MIN_RAW_ERROR)
 
     @staticmethod
     def zoom_candidate(ranked, tried):
@@ -364,7 +523,7 @@ class DebugSession:
                     ranked = self.search(resume=True)
                     continue
                 eff = self.answers()
-            result = zoom_into(self, node, eff.get(node.path))
+            result = zoom_into(self, node, eff.get(node.path), self._call_error(node.path))
             self.zoom_results.append(result)
             if result.status == "localized":
                 return self.descend(node, result, eff, tried)
@@ -388,16 +547,29 @@ class DebugSession:
         have been wrong) or never asked (opaque / unknown). Zoom into such
         children; a child whose zoom is confirmed replaces the current call.
         Children whose inputs were already wrong (inadmissible) are skipped.
+        A child that was never asked about gets its call question first.
         """
         for _ in range(max_depth):
-            region = set(result.region)
-            implicated = [c for c in self.tree.children(node)
-                          if c.call_line in region and c.path not in tried
-                          and eff.get(c.path) != "inadmissible"]
+            if result.callees is not None:  # exactly the calls made inside the region
+                implicated = [self.tree.by_path[p] for p in result.callees if p in self.tree.by_path]
+            else:
+                region = set(result.region)
+                implicated = [c for c in self.tree.children(node) if c.call_line in region]
+            implicated = [c for c in implicated
+                          if c.path not in tried and eff.get(c.path) != "inadmissible"]
             moved = False
             for child in implicated:
                 tried.add(child.path)
-                child_result = zoom_into(self, child, eff.get(child.path))
+                if eff.get(child.path) is None and child.monitored:
+                    # never judged (the search went to the lines early): a call
+                    # question is cheaper than looking inside, and it is evidence
+                    answer = self.ask(child)
+                    if answer.action == "quit":
+                        return node, result
+                    eff = self.answers()
+                    if eff.get(child.path) != "no":
+                        continue
+                child_result = zoom_into(self, child, eff.get(child.path), self._call_error(child.path))
                 self.zoom_results.append(child_result)
                 if child_result.status == "quit":
                     return node, result
@@ -439,7 +611,7 @@ class DebugSession:
                 verdict = answer.verdict
             if verdict in ("yes", "inadmissible"):
                 continue
-            result = zoom_into(self, node, verdict)
+            result = zoom_into(self, node, verdict, self._call_error(node.path))
             self.zoom_results.append(result)
             if result.status in ("localized", "quit"):
                 return node, result
@@ -460,6 +632,24 @@ class DebugSession:
         self.found = found
         self.zoom = zoom
         return found
+
+
+MAX_ANSWER_ERROR = 0.45
+MIN_RAW_ERROR = 0.01  # confidence_use="raw": no answer is ever certain
+
+
+def answer_error(confidence, floor):
+    """The error rate of one answer with a stated confidence, or None for a plain answer.
+
+    A plain answer (confidence 1.0, as a person or the ground truth gives) uses
+    the session's error rate ε. An answer with a stated confidence, such as
+    Claude's, counts for less when it is unsure: 0.7 sure means a 30% chance
+    of being wrong. It never counts for more than a plain answer (language
+    models tend to be overconfident), so the rate is kept in [ε, 45%].
+    """
+    if confidence is None or confidence >= 1.0:
+        return None
+    return min(MAX_ANSWER_ERROR, max(floor, 1.0 - confidence))
 
 
 def check_same_execution(old, new):

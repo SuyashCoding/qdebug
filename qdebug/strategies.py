@@ -50,7 +50,7 @@ class Strategy:
 
     def _stop(self, reason):
         self.stop_reason = reason
-        return None
+        return
 
     def _escalate(self, reason):
         self.escalate_reason = reason
@@ -116,6 +116,9 @@ class InfoGainStrategy(Strategy):
         opaque = [n for n in tree.nodes if n.opaque and n.parent is not None
                   and n.path not in answers]
         gains = belief.information_gains(post, candidates + opaque)
+        step = self._settle_leader(tree, top, answers, gains, belief.p_wrong(post, top))
+        if step is not None:
+            return step if step != "stop" else None
         best = max(candidates, key=lambda n: (gains[n.id], -n.id)) if candidates else None
         best_gain = gains[best.id] if best is not None else 0.0
         opaque_gain = max((gains[n.id] for n in opaque), default=0.0)
@@ -133,6 +136,47 @@ class InfoGainStrategy(Strategy):
         if best is None or best_gain < self.min_gain:
             return self._stop("no informative question left")
         return best
+
+    def _settle_leader(self, tree, top, answers, gains, p_wrong):
+        """Questions that confirm or clear the leading hypothesis (tuning rules).
+
+        The certificate needs the leader judged wrong and every callee
+        cleared. Information gain alone gets there slowly: it avoids questions
+        whose answer it can predict (the leader itself) and keeps returning to
+        large subtrees that were already judged correct.
+
+        * A leader with many open callees is asked about first, and once it is
+          wrong the search stops for the line-level search ("fan-out"): that
+          needs about log2(lines) questions instead of one per callee, and
+          names the callee to descend into.
+        * A wrong leader with a few open callees is settled by asking those.
+        * A leader whose callees are all cleared, and whose output is more
+          likely wrong than not, is asked about: the answer completes the
+          certificate.
+
+        Returns a node to ask, ESCALATE, "stop", or None when no rule applies.
+        """
+        hints = tree.hints
+        if top.parent is None or not (hints.zoom_fanout or hints.settle_leader):
+            return None
+        verdict = answers.get(top.path)
+        open_callees = [c for c in tree.children(top) if c.path not in answers]
+        if hints.zoom_fanout and len(open_callees) >= hints.zoom_fanout:
+            if verdict is None and askable(top, answers):
+                return top
+            if verdict == "no":
+                self._stop("fan-out")
+                return "stop"
+        elif hints.settle_leader:
+            if verdict == "no" and open_callees:
+                ready = [c for c in open_callees if askable(c, answers)]
+                if ready:
+                    return max(ready, key=lambda n: (gains.get(n.id, 0.0), -n.id))
+                if not self.escalation_exhausted:
+                    return self._escalate(f"the callees of {top.qualname} are not monitored")
+            elif verdict is None and not open_callees and p_wrong >= 0.5 and askable(top, answers):
+                return top
+        return None
 
     def result(self, tree, answers):
         """Calls by posterior; if one function is confidently buggy, its calls first.

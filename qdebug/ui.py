@@ -14,7 +14,7 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from qdebug.oracles import HumanOracle, Oracle
+from qdebug.oracles import HumanOracle, Oracle, ai_hint
 from qdebug.tracer import truncate
 from qdebug.tuning import LOW_CONFIDENCE_STOPS
 
@@ -41,8 +41,9 @@ CALL_HELP = """  y  yes, that result is right       n  no, that result is wrong
   ?  I can't tell
   i  the inputs already look wrong
   t  this function is fine, stop asking about it
-  s  show the function's code        w  why this question?
-  tree  show every call so far       u  undo my last answer
+  s  show the function's code        e  how it behaved in passing tests
+  w  why this question?              tree  show every call so far
+  u  undo my last answer
   q  stop and show what we have"""
 LINE_HELP = """  y  yes, these values look right   n  no, something is already wrong
   ?  I can't tell
@@ -106,11 +107,11 @@ class UI:
     def note(self, message):
         """Session progress messages, reworded for the audience."""
         text = str(message).strip()
-        if text.startswith("↑"):
+        if text.startswith("escalating"):
             text = "Not enough to go on yet, so QDebug is looking at more functions."
         elif text.startswith("zoom refuted"):
             text = "That call turned out to be fine, so QDebug is moving to the next suspect."
-        elif text.startswith("note:"):
+        elif text.startswith("note:") and "folded" in text:
             text = "This test makes a lot of calls, so QDebug grouped some of them together."
         elif text.startswith("undone"):
             text = "Undone."
@@ -175,6 +176,49 @@ class UI:
                           Text(f"{100 * share:3.0f}%"))
         return Group(Text("Most suspected right now:", style="dim"), table)
 
+    def hint(self, question):
+        text = ai_hint(question)
+        if text:
+            self.console.print(Text(f"  {text}", style="magenta"))
+
+    def triage(self, triage, model):
+        """What Claude made of the failing test before the questions start."""
+        if triage is None:
+            return
+        kind = {"crash": "a crash", "wrong-value": "a wrong value", "state": "a problem with shared state",
+                "unknown": "not clear yet"}.get(triage.bug_kind, triage.bug_kind)
+        body = [Text.assemble("Claude reads this as ", (kind, "bold"), ". ", triage.reason)]
+        if triage.suspects:
+            names = ", ".join(short_name(s.split("::", 1)[-1]) for s in triage.suspects)
+            body.append(Text.assemble("First suspects: ", (names, "bold")))
+        body.append(Text("QDebug still checks every suspect with questions.", style="dim"))
+        self.console.print(Panel(Group(*body), title=f"First look ({model})", title_align="left",
+                                 border_style="magenta"))
+
+    def show_ai_answer(self, question, ctx, answer):
+        """A question that Claude answered on its own (hybrid oracle)."""
+        if question.kind == "call":
+            self.show_call(question, ctx)
+        else:
+            self.show_line(question, ctx)
+        self.show_answer(answer.verdict, f"Claude ({answer.confidence:.0%} sure)")
+        reason = answer.note.split(": ", 1)[1] if ": " in answer.note else ""
+        if reason:
+            self.console.print(Text(f"    {reason}", style="dim"))
+
+    def explanation(self, explanation):
+        if explanation is None:
+            return
+        body = [Text(explanation.summary, style="bold")]
+        if explanation.explanation:
+            body += [Text(), Text(explanation.explanation)]
+        if explanation.fix.strip():
+            body += [Text(), Text("Suggested fix:", style="dim"), Text(explanation.fix, style="green")]
+        body += [Text(), Text.assemble("Claude's confidence: ", (explanation.confidence.capitalize(),
+                                       CONFIDENCE_STYLES.get(explanation.confidence.capitalize(), "bold")))]
+        self.console.print(Panel(Group(*body), title="What went wrong", title_align="left",
+                                 border_style="magenta"))
+
     def show_call(self, question, ctx):
         self.step(2)
         node, info = question.node, question.func_info
@@ -208,6 +252,7 @@ class UI:
             suspects = self._suspects(ctx)
             if suspects is not None:
                 self.console.print(suspects)
+        self.hint(question)
 
     def _code_window(self, lines, first, last, marked, arrow):
         table = Table.grid(padding=(0, 1))
@@ -244,10 +289,12 @@ class UI:
                 body.append(Text.assemble("Raising: ", (truncate(cp["exc"]["short"], VALUE_WIDTH), "bold red")))
             else:
                 body.append(Text.assemble("Returning: ",
-                                          (truncate(cp["ret"]["short"] if cp.get("ret") else "?", VALUE_WIDTH), "bold")))
+                                          (truncate(cp["ret"]["short"] if cp.get("ret") else "?",
+                                                    VALUE_WIDTH), "bold")))
         self.console.print()
         self.console.print(Panel(Group(*body), title=f"Line check {question.number}", title_align="left",
                                  subtitle=node.file, subtitle_align="right", border_style=ACCENT))
+        self.hint(question)
 
     def show_answer(self, verdict, source):
         word = ANSWER_WORDS.get(verdict, str(verdict))
@@ -347,10 +394,14 @@ class FriendlyOracle(HumanOracle):
 class NarratedOracle(Oracle):
     """Shows an automatic oracle's questions and answers, so a watcher can follow along."""
 
+    LABELS = {"truth": "Automatic answer (compared with the fixed version)", "claude": "Claude"}
+
     def __init__(self, base, ui):
         self.base = base
         self.ui = ui
         self.name = base.name
+        inner = getattr(base, "base", base)  # through a NoisyOracle
+        self.label = self.LABELS.get(inner.name, "Automatic answer")
 
     def judge(self, question, ctx=None):
         if question.kind == "call":
@@ -359,7 +410,12 @@ class NarratedOracle(Oracle):
             self.ui.show_line(question, ctx)
         answer = self.base.judge(question, ctx)
         if answer.verdict is not None:
-            self.ui.show_answer(answer.verdict, "Automatic answer (compared with the fixed version)")
+            label = self.label
+            if answer.confidence < 1.0:
+                label += f" ({answer.confidence:.0%} sure)"
+            self.ui.show_answer(answer.verdict, label)
+            if self.label == "Claude" and ": " in answer.note:
+                self.ui.console.print(Text(f"    {answer.note.split(': ', 1)[1]}", style="dim"))
         return answer
 
 

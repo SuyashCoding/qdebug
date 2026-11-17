@@ -19,6 +19,30 @@ Prune    assertion_weight   Calls made before the previous passing assertion
 Prune    repeat_discount    Every "yes" about a call of f is weak evidence
                             that f is fine: scale down f's other calls, unless
                             some call of f was judged wrong.
+Prune    focus_test         When several tests fail, debug the one that runs
+                            the least project code: its execution tree is the
+                            smallest, so it needs the fewest questions.
+Continue zoom_fanout        A leading hypothesis with many callees left to
+                            judge is expensive to confirm one callee at a
+                            time. Ask about the call itself, and if it is
+                            wrong go to the line-level search: that needs
+                            about log2(lines) questions and names the callee
+                            to descend into.
+Continue settle_leader      Once the leading hypothesis is judged wrong, ask
+                            about its few remaining callees before anything
+                            else, so that the search can stop.
+Prune    crash_boost        When the test died with an exception raised inside
+                            project code, the calls the exception travelled
+                            through are likelier to hold the bug: the call
+                            where it started most of all.
+Continue zoom_search=bayes  The line search keeps a posterior over the line
+                            where the state first goes wrong, so one wrong
+                            answer about the variables can be outvoted by later
+                            ones instead of sending the search to the wrong half
+                            (zoom.next_probe_bayes).
+
+BUG_PROFILES adjust these rules for one kind of bug (--bug-kind, or chosen by
+the AI assistant from the failing test): see apply_bug_kind.
 """
 
 import ast
@@ -46,6 +70,21 @@ class Tuning:
     # A function got a right answer and never a wrong answer
     repeat_discount: float = 1.0   # 1.0 = off
 
+    # Several tests fail and the user did not pick one
+    focus_test: bool = False
+
+    # The leading hypothesis has this many unjudged callees (0 = off)
+    zoom_fanout: int = 0
+
+    # The leading hypothesis was judged wrong and has a few unjudged callees
+    settle_leader: bool = False
+
+    # The test died with an exception raised inside project code
+    crash_boost: float = 1.0       # 1.0 = off
+
+    # The line search gets two answers that contradict each other
+    zoom_search: str = "binary"    # "bayes": weigh line answers instead of trusting each one
+
 
 POLICIES = {
     "baseline": Tuning(),
@@ -53,16 +92,52 @@ POLICIES = {
     # sessions, because a wrong "yes" then also discounts the buggy function's
     # other calls. It is available as --repeat-discount for experiments.
     "tuned": Tuning(fallback=True, evidence_stop=True, exclude_tests=True,
-                    assertion_weight=0.05),
+                    assertion_weight=0.05, focus_test=True, zoom_fanout=5, settle_leader=True,
+                    crash_boost=4.0, zoom_search="bayes"),
 }
 
 
-def resolve_tuning(policy, assertion_weight=None, repeat_discount=None):
-    """The Tuning of a named policy, with optional knob overrides."""
+# Coarse kinds of bug. The AI assistant picks one from the failing test (or the
+# user passes --bug-kind); benchmark bugs carry one as their "category".
+BUG_KINDS = {
+    "crash": "the test fails with an exception raised inside project code",
+    "wrong-value": "a function computes or returns a wrong value",
+    "state": "wrong shared or mutable state: aliasing, in-place mutation, a cache, "
+             "a mutable default argument, a counter, an object changed by an earlier call",
+    "unknown": "not clear from the test and its failure",
+}
+
+# How each kind changes the rules above, and why:
+#   crash  the exception's path is strong evidence: raise crash_boost.
+#   state  the state may have gone wrong in a call made *before* the previous
+#          passing assertion (the first call poisons a cache, the second one
+#          reads it), so those calls keep their full prior.
+BUG_PROFILES = {
+    "crash": {"crash_boost": 8.0},
+    "wrong-value": {},
+    "state": {"assertion_weight": 1.0},
+    "unknown": {},
+}
+
+
+def apply_bug_kind(tuning, kind):
+    """tuning adjusted for one kind of bug (see BUG_PROFILES)."""
+    if kind is None:
+        return tuning
+    try:
+        changes = BUG_PROFILES[kind]
+    except KeyError:
+        raise ValueError(f"unknown bug kind {kind!r}; choose from {sorted(BUG_KINDS)}") from None
+    return replace(tuning, **changes)
+
+
+def resolve_tuning(policy, assertion_weight=None, repeat_discount=None, bug_kind=None):
+    """The Tuning of a named policy, adjusted for a bug kind, with optional knob overrides."""
     try:
         tuning = POLICIES[policy]
     except KeyError:
         raise ValueError(f"unknown policy {policy!r}; choose from {sorted(POLICIES)}") from None
+    tuning = apply_bug_kind(tuning, bug_kind)
     if assertion_weight is not None:
         tuning = replace(tuning, assertion_weight=assertion_weight)
     if repeat_discount is not None:

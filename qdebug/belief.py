@@ -14,7 +14,8 @@ that contradict the true hypothesis; the error rate below keeps such answers
 from eliminating it outright.
 
 Each yes/no answer is treated as noisy evidence: likelihood 1 - ε if it is
-consistent with H_b, ε otherwise. "unknown" carries no evidence. That the
+consistent with H_b, ε otherwise. An answer that states its own confidence
+(Claude's do) uses max(ε, 1 - confidence) instead, see session.answer_error. "unknown" carries no evidence. That the
 test root is wrong is consistent with every hypothesis, so it is implicit.
 
 Extension (Naish's three-valued debugging): "inadmissible" means "this
@@ -74,8 +75,9 @@ class Belief:
         """answers: {path: verdict} with verdict in yes/no/unknown."""
         tree = self.tree
         n = len(tree)
-        log_in = math.log(1 - self.error_rate)
-        log_out = math.log(self.error_rate)
+        errors = tree.hints.answer_error  # per-answer error rates (stated confidences)
+        default_in = math.log(1 - self.error_rate)
+        default_out = math.log(self.error_rate)
         # diff[i] accumulates range additions over the pre-order index.
         base = 0.0
         diff = [0.0] * (n + 1)
@@ -83,6 +85,11 @@ class Belief:
             node = tree.by_path.get(path)
             if node is None or verdict not in ("yes", "no", "inadmissible"):
                 continue
+            eps = errors.get(path)
+            if eps is None:
+                log_in, log_out = default_in, default_out
+            else:
+                log_in, log_out = math.log(1 - eps), math.log(eps)
             lo, hi = node.id, node.id + tree.size[node.id]
             if verdict == "inadmissible":
                 lo, hi = 0, node.id  # consistent: everything that started earlier
