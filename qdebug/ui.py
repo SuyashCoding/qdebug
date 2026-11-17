@@ -25,8 +25,8 @@ STEPS = {
         "QDebug shows you one call and asks if its result is right. You don't need to read "
         "the code. It picks the question whose answer rules out the most."),
     3: ("Find the exact line",
-        "QDebug replays that call and shows you the variables part-way through. "
-        "Each answer cuts the remaining code roughly in half."),
+        "QDebug replays that call and stops at a line. Answer no if a variable is already wrong, "
+        "or if a correct program would never be at this line with these inputs."),
 }
 TOTAL_STEPS = len(STEPS)
 ANSWER_WORDS = {"yes": "right", "no": "wrong", "unknown": "not sure",
@@ -45,7 +45,8 @@ CALL_HELP = """  y  yes, that result is right       n  no, that result is wrong
   w  why this question?              tree  show every call so far
   u  undo my last answer
   q  stop and show what we have"""
-LINE_HELP = """  y  yes, these values look right   n  no, something is already wrong
+LINE_HELP = """  y  yes, still on the right track   n  no, a value is wrong, or a correct
+                                       program would not be at this line
   ?  I can't tell
   s  show the function's code        u  undo my last answer
   q  stop and show what we have"""
@@ -373,7 +374,7 @@ class FriendlyOracle(HumanOracle):
     """The human oracle, with the questions shown through the UI."""
 
     call_prompt = "  Is that the right result? (y yes, n no, ? not sure, h more) > "
-    line_prompt = "  Do these values look right so far? (y yes, n no, ? not sure, h more) > "
+    line_prompt = "  Still on the right track here? (y yes, n no, ? not sure, h more) > "
     call_help = CALL_HELP
     line_help = LINE_HELP
 

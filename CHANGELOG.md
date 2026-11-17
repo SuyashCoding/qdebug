@@ -51,6 +51,9 @@
 - Benchmarks are suites under `benchmarks/` (`project/` + `bugs.json`); `qdebug variants` builds and
   checks them. A second suite, `planner`, has 34 seeded bugs of many kinds.
 - Session files go to `<project>/.qdebug/sessions/` by default.
+- A beginner-friendly README: installation on Windows, macOS and Linux, a step-by-step demo answered by
+  hand, and how to add a Claude API key. The full description moved to `docs/DETAILS.md`.
+- Line questions now say plainly that being at a line a correct program would not reach counts as wrong.
 - Lint (ruff), CI on Linux, Windows and macOS, and tests for every new rule and the AI code (a fake
   client, and the real SDK against a local stub server).
 
