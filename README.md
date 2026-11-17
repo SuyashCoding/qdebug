@@ -11,7 +11,8 @@ that is wrong.
 It works with Python projects that use [pytest](https://docs.pytest.org/) for their tests.
 
 - [1. Install](#1-install)
-- [2. Run the demo](#2-run-the-demo)
+- [2. Run the demo: a real bug in a real library](#2-run-the-demo-a-real-bug-in-a-real-library)
+  (or [in Docker](#no-luck-installing-run-the-demo-in-docker))
 - [3. Use it on your own project](#3-use-it-on-your-own-project)
 - [4. Optional: let Claude help](#4-optional-let-claude-help)
 - [Troubleshooting](#troubleshooting)
@@ -133,130 +134,210 @@ This should print `qdebug 0.2.0`.
 
 ---
 
-## 2. Run the demo
+## 2. Run the demo: a real bug in a real library
 
-qdebug comes with a small online-shop program (in `benchmarks/shop/project`) and five copies of it, each
-with one bug planted in it. In this demo you'll find the bug in the first copy, **without reading its code**.
+In this demo you'll use qdebug on a real bug in a real program that you've probably never seen the code of.
 
-### Step 1: Make the buggy copies
+### What is tqdm?
 
-```bash
-qdebug variants --suite shop
+[tqdm](https://github.com/tqdm/tqdm) (from "taqaddum", Arabic for *progress*) is a Python library that adds a
+**progress bar** to any loop. You wrap the thing you loop over in `tqdm(...)`:
+
+```python
+from tqdm import tqdm
+
+for file in tqdm(files_to_download):
+    download(file)
 ```
 
-This creates the five buggy copies in `benchmarks/shop/variants/` and checks that each one really has a
-failing test. It takes a few seconds. You only need to do it once.
+and while the loop runs, the terminal shows how far along it is, how fast it's going and how long is left:
 
-### Step 2: Start qdebug on the first bug
-
-```bash
-qdebug debug --project benchmarks/shop/variants/bug_01
+```text
+ 76%|███████████████▏    | 763/1000 [00:02<00:00, 380.12it/s]
 ```
 
-qdebug runs all 35 tests of the shop. Two of them fail:
+It's one of the most downloaded packages on [PyPI](https://pypi.org/project/tqdm/), Python's package
+store, and many well-known tools use it. If you've ever installed a machine-learning model or dataset in
+Python and watched a bar fill up, that was probably tqdm.
+
+### Why this counts as a real program
+
+- **Nobody wrote it for this demo.** It's tqdm's own code, written over years by its developers and many
+  outside contributors, for real users: 10 source files, about 2,600 lines, with classes, background
+  threads and locks. qdebug has to search through 109 functions.
+- **The bug really happened.** In 2019, using `unit_scale` on a loop with no known length made tqdm crash.
+  tqdm's developers
+  [fixed it in public](https://github.com/tqdm/tqdm/commit/964dee631d0ed30e2f799b42fc58ba5e73795a08). The
+  failing test you'll see is the one *they* wrote for it.
+- **Researchers use it to test debugging tools.** This exact bug is "tqdm bug 4" in
+  [BugsInPy](https://github.com/soarsmu/BugsInPy), a collection of real bugs from 17 real Python projects
+  that research papers use to measure debugging tools.
+
+The folder `examples/tqdm` holds tqdm's code exactly as it was **before** the fix, with 52 tests
+([exactly what's there, and the few small files added so its 2019 tests run on today's
+Python](examples/tqdm/QDEBUG_DEMO.md)). The shop bugs in [More practice](#more-practice-bugs-planted-in-a-small-program)
+are the opposite: a small program written for qdebug, with bugs planted on purpose.
+
+Your job: find tqdm's bug **without reading its code**, by answering 7 questions.
+
+### Step 1: Start qdebug
+
+In the qdebug folder, with your virtual environment switched on:
+
+```bash
+qdebug debug --project examples/tqdm
+```
+
+qdebug runs tqdm's tests. One of them fails:
 
 ```text
 Step 1 of 3: Run the tests ────────────────────────────────────────────────
-35 tests ran:  33 passed   2 failed
-1  tests/test_pricing.py::test_line_total_bulk      AssertionError: assert 1890 == 1791
-2  tests/test_invoice.py::test_bulk_invoice_qty_t…  AssertionError: assert 1890 == 1791
-  Which test should we debug? (1-2) >
-```
-
-Type **1** and press Enter. qdebug lists the simplest test first, because it needs the fewest questions.
-
-```text
+52 tests ran:  50 passed   1 failed
 ┌─ The failing test ─────────────────────────────────────────────────────────┐
-│ tests/test_pricing.py::test_line_total_bulk                                │
-│ AssertionError: assert 1890 == 1791                                        │
-│ +  where 1890 = line_total(LineItem(sku='PEN-001', quantity=10, ...))      │
+│ tqdm/tests/tests_tqdm.py::test_nototal                                     │
+│ TypeError: unsupported operand type(s) for *=: 'NoneType' and 'int'        │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
-So: 10 pens at 1.99 each should cost 17.91 after a discount, but the program says 18.90.
+Here is that test. You don't need to understand tqdm to follow it:
 
-### Step 3: Find the broken function
+```python
+def test_nototal():
+    """Test unknown total length"""
+    with closing(StringIO()) as our_file:
+        for i in tqdm((i for i in range(10)), file=our_file, unit_scale=10):
+            pass
+        assert "100it" in our_file.getvalue()
+```
 
-qdebug now shows you **one call** of a function: what went in, and what came out.
+It loops over 10 items with a progress bar. Two details matter:
+
+- The items come from a *generator* `(i for i in range(10))`, which has no length, so tqdm **can't know the
+  total**. That's allowed: tqdm should just count, without a percentage.
+- `unit_scale=10` means "count every item as 10". After 10 items, the bar should say `100it` (100 items).
+
+Instead, the program crashes with a `TypeError`: something tried to multiply `None` by a number.
+
+### Step 2: Find the broken function
+
+qdebug now shows you **one call** of a function: what went in, and what came out. You only judge whether the
+result makes sense. (qdebug also shows the functions it suspects most; you can ignore that.)
 
 ```text
 ┌─ Question 1 ───────────────────────────────────────────────────────────────┐
-│ Bulk discount rate: 10% from 10 units, 5% from 5 units, otherwise none.    │
-│ quantity_discount_rate was called with:                                    │
-│ quantity  10                                                               │
+│ Use `self.sp` and to display `msg` in the specified `pos`.                 │
+│ tqdm.display was called with:                                              │
+│ self  {'iterable': <generator object ...>, 'desc': '', 'total': None, ...  │
+│ msg   None                                                                 │
+│ pos   None                                                                 │
 │                                                                            │
-│ and it returned:                                                           │
-│ 0.05                                                                       │
-└────────────────────────────────────────────────────────── shop/pricing.py:22 ─┘
+│ and it raised an error:                                                    │
+│ TypeError: TypeError("unsupported operand type(s) for *=: 'NoneType' ...   │
+└───────────────────────────────────────────────────────── tqdm/_tqdm.py:1283 ─┘
   Is that the right result? (y yes, n no, ? not sure, h more) >
 ```
 
-Read the first line, the function's description: *10% from 10 units*. The function got exactly 10 units,
-so it should have returned `0.10` (10%), but it returned `0.05` (5%). That's wrong, so type **n**.
+`display` draws the progress bar. Drawing a progress bar should never crash, so this result is wrong: type
+**n**.
 
-### Step 4: Find the exact line
-
-qdebug now knows which function is broken. It replays that function and stops at different lines, showing
-you the variables at that moment.
+**Question 2** asks about `tqdm.__repr__`, which turns the bar into text. It crashed with the same error.
+Turning a bar into text shouldn't crash either: type **n**.
 
 ```text
-┌─ Line check 1 ─────────────────────────────────────────────────────────────┐
-│ When quantity_discount_rate finished:                                      │
-│ The variables held:                                                        │
-│ quantity  10                                                               │
-│ Returning: 0.05                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
-  Still on the right track here? (y yes, n no, ? not sure, h more) >
+┌─ Question 3 ───────────────────────────────────────────────────────────────┐
+│ Public API for read-only member access                                     │
+│ tqdm.format_dict was called with:                                          │
+│ self  {'iterable': <generator object ...>, 'desc': '', 'total': None, ...  │
+│                                                                            │
+│ and it returned:                                                           │
+│ {'n': 0, 'total': None, 'elapsed': 0, 'ncols': None, 'prefix': '',         │
+│ 'ascii': True, 'unit': 'it', 'unit_scale': 10, 'rate': None,               │
+│ 'bar_format': None, 'postfix': None, 'unit_divisor': 1000}                 │
+└────────────────────────────────────────────────────────── tqdm/_tqdm.py:950 ─┘
+  Is that the right result? (y yes, n no, ? not sure, h more) >
 ```
 
-It's returning `0.05`, which we already know is wrong: type **n**.
+This one just collects the bar's settings. Check them against the test: `total` is `None` (right, the
+generator has no length), `unit_scale` is `10` (right, the test asked for that), and `n` (items counted so
+far) is `0` (right, the bar is just starting). Everything is correct: type **y**.
+
+```text
+┌─ Question 4 ───────────────────────────────────────────────────────────────┐
+│ Return a string-based progress bar given some parameters                   │
+│ tqdm.format_meter was called with:                                         │
+│ n             0                                                            │
+│ total         None                                                         │
+│ unit_scale    10                                                           │
+│ ...                                                                        │
+│ and it raised an error:                                                    │
+│ TypeError: TypeError("unsupported operand type(s) for *=: 'NoneType' ...   │
+└────────────────────────────────────────────────────────── tqdm/_tqdm.py:252 ─┘
+  Is that the right result? (y yes, n no, ? not sure, h more) >
+```
+
+`format_meter` gets exactly the correct settings from Question 3, and should turn them into a progress bar.
+It crashed instead: type **n**.
+
+Now qdebug knows which function is broken: `format_meter` got correct inputs and still went wrong.
+
+### Step 3: Find the exact line
+
+qdebug replays `format_meter` and stops at different lines, showing you the variables at that moment.
+
+**Line check 1** shows the function at its end, raising the `TypeError`. We already know that's wrong:
+type **n**.
 
 ```text
 ┌─ Line check 2 ─────────────────────────────────────────────────────────────┐
-│ Inside quantity_discount_rate, just before line 27 runs:                   │
-│ 24       if quantity > 10:                                                 │
-│ 25           return 0.10                                                   │
-│ 26       if quantity >= 5:                                                 │
-│ 27 >         return 0.05                                                   │
-│ 28       return 0.0                                                        │
-│ (line 27 has not run yet)                                                  │
+│ Inside tqdm.format_meter, just before line 323 runs:                       │
+│ 321           # apply custom scale if necessary                            │
+│ 322           if unit_scale and unit_scale not in (True, 1):               │
+│ 323 >             total *= unit_scale                                      │
+│ 324               n *= unit_scale                                          │
+│ (line 323 has not run yet)                                                 │
 │                                                                            │
 │ The variables held:                                                        │
-│ quantity  10                                                               │
-└────────────────────────────────────────────────────────────────────────────┘
+│ n             0                                                            │
+│ total         None                                                         │
+│ unit_scale    10                                                           │
+│ ...                                                                        │
+└──────────────────────────────────────────────────────────── tqdm/_tqdm.py ─┘
   Still on the right track here? (y yes, n no, ? not sure, h more) >
 ```
 
-This one is trickier. `quantity` is still 10, which is fine. But the program is about to
-`return 0.05`, and with 10 units a correct program would never get here: it should already have returned
-`0.10` at line 25. So something has already gone wrong: type **n**.
+This is the tricky one. Every variable still has a fine value. But line 323 is about to multiply `total` by
+10, and `total` is `None` (there is no total). A correct program would never try that, so it should never be
+at this line with these values: type **n**.
 
 > **The rule for line checks:** answer **n** if a variable has a wrong value, **or** if a correct program
-> would never be at this line with these inputs.
+> would never be at this line with these values.
 
-Line check 3 asks the same about line 26 (`if quantity >= 5:`). Again, a correct program would already
-have returned at line 25, so type **n**.
+**Line check 3** stops just before line 322, `if unit_scale and unit_scale not in (True, 1):`. Nothing has
+gone wrong yet: the values are the same correct ones from Question 3. Type **y**.
 
-### Step 5: The answer
+### Step 4: The answer
 
 ```text
 ┌─ Found it ─────────────────────────────────────────────────────────────────┐
-│ shop/pricing.py, line 24, in quantity_discount_rate                        │
+│ tqdm/_tqdm.py, line 322, in tqdm.format_meter                              │
 │                                                                            │
-│ 22    def quantity_discount_rate(quantity):                                │
-│ 23        """Bulk discount rate: 10% from 10 units, 5% from 5 units, ..."""│
-│ 24 >>     if quantity > 10:                                                │
-│ 25            return 0.10                                                  │
-│ 26        if quantity >= 5:                                                │
+│ 320                                                                        │
+│ 321            # apply custom scale if necessary                           │
+│ 322 >>         if unit_scale and unit_scale not in (True, 1):              │
+│ 323                total *= unit_scale                                     │
+│ 324                n *= unit_scale                                         │
 │                                                                            │
 │ Confidence: High   Your answers point directly at this code.               │
-│ The bad call: quantity_discount_rate(quantity=10) → 0.05                   │
 └────────────────────────────────────────────────────────────────────────────┘
-4 questions to search a project with 39 functions, without reading its code.
+7 questions to search a project with 109 functions, without reading its code.
 ```
 
-Line 24 says `quantity > 10`, but the description says *from* 10 units, so it should be `quantity >= 10`.
-That's the bug: you found it with 4 answers: **1, n, n, n, n**.
+Things were fine before line 322 and wrong right after it, so line 322 is the culprit. It checks the scale,
+but forgets to check that there **is** a total before line 323 multiplies it. That's exactly the bug tqdm's
+developers fixed: [their fix](https://github.com/tqdm/tqdm/commit/964dee631d0ed30e2f799b42fc58ba5e73795a08)
+adds an `if total:` check right there.
+
+You found a real bug in a 2,600-line library with 7 answers: **n, n, y, n, n, n, y**.
 
 ### All the keys you can press
 
@@ -277,17 +358,46 @@ That's the bug: you found it with 4 answers: **1, n, n, n, n**.
 Don't worry about making a mistake: qdebug treats every answer as a clue that might be wrong, checks its
 conclusion, and you can always press **u** to undo.
 
-### Try the other bugs
+### No luck installing? Run the demo in Docker
 
-Each of these has a different kind of bug. Try to find it before qdebug tells you:
+[Docker](https://www.docker.com/products/docker-desktop/) runs qdebug in a ready-made Linux box, so it works
+the same on Windows, macOS and Linux and you don't need to install Python. Install **Docker Desktop**, open it
+and wait until it says *Engine running*. Then, in a terminal in the qdebug folder (`git clone` and `cd qdebug`
+from [Install](#1-install)):
 
 ```bash
-qdebug debug --project benchmarks/shop/variants/bug_03
+docker build -t qdebug .
 ```
 
-Change the number at the end to `bug_02`, `bug_04` or `bug_05` for the others. There are 34 more in a
-second practice program. Make those copies once (it takes about a minute), then pick any folder in
-`benchmarks/planner/variants/`:
+This takes a minute or two the first time. Then start the demo:
+
+```bash
+docker run -it --rm qdebug
+```
+
+You get the same questions as above. Any other qdebug command works too, by adding it to the end, for example
+`docker run -it --rm qdebug qdebug debug --project benchmarks/shop/variants/bug_01`.
+
+### More practice: bugs planted in a small program
+
+qdebug also comes with a small online-shop program and five copies of it, each with one bug planted in it.
+They're smaller than tqdm, so they make quick practice. Make the copies once:
+
+```bash
+qdebug variants --suite shop
+```
+
+Then debug the first one:
+
+```bash
+qdebug debug --project benchmarks/shop/variants/bug_01
+```
+
+Two tests fail; pick **1**. Hint: read each function's description (the first line of each question). With
+the answers **n, n, n, n**, qdebug lands on line 24, `if quantity > 10:`, which should be `>= 10`.
+
+Change the end to `bug_02` up to `bug_05` for the others. There are 34 more in a second practice program
+(making the copies takes about a minute), in `benchmarks/planner/variants/`:
 
 ```bash
 qdebug variants --suite planner
@@ -379,10 +489,16 @@ Choose how much Claude does:
 | `qdebug debug --project ... --oracle hybrid` | **Claude** when it's sure, **you** when it isn't (it shows you its guess) |
 | `qdebug debug --project ... --oracle claude` | **Claude** answers everything; you just watch |
 
-For example, the demo bug with Claude helping:
+For example, the tqdm demo bug with Claude helping:
 
 ```bash
-qdebug debug --project benchmarks/shop/variants/bug_01 --oracle hybrid
+qdebug debug --project examples/tqdm --oracle hybrid
+```
+
+In Docker, set the key in your terminal as above, then pass it into the container with `-e`:
+
+```bash
+docker run -it --rm -e ANTHROPIC_API_KEY qdebug qdebug debug --project examples/tqdm --oracle hybrid
 ```
 
 If the add-on isn't installed or your Python is too old, qdebug stops and tells you what to install. If
@@ -408,9 +524,18 @@ PATH"*). On macOS and Linux use `python3` instead of `python`.
 **PowerShell says "running scripts is disabled on this system".** Use Command Prompt (`cmd`) instead,
 where `.venv\Scripts\activate` works.
 
-**`project directory not found: benchmarks/shop/variants/bug_01`.** You skipped
-[Step 1 of the demo](#step-1-make-the-buggy-copies) (`qdebug variants --suite shop`), or your terminal
-isn't in the qdebug folder (`cd qdebug`).
+**`project directory not found: examples/tqdm`.** Your terminal isn't in the qdebug folder: `cd qdebug`
+first.
+
+**`project directory not found: benchmarks/shop/variants/bug_01`.** You haven't made the practice copies yet
+(`qdebug variants --suite shop`, see [More practice](#more-practice-bugs-planted-in-a-small-program)), or
+your terminal isn't in the qdebug folder.
+
+**Docker says it can't connect (`error during connect`, `Cannot connect to the Docker daemon`).** Docker
+Desktop isn't running. Open it and wait until it says *Engine running*.
+
+**Docker says `the input device is not a TTY`.** You're in Git Bash on Windows. Use Command Prompt or
+PowerShell instead, or put `winpty` in front: `winpty docker run -it --rm qdebug`.
 
 **`no failing test in ...`.** All of that project's tests pass, so there is nothing to debug.
 

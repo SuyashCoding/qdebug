@@ -36,6 +36,39 @@ jobs:
         if: matrix.python == '3.12'
         run: python -m pytest -m e2e -q
 
+  demo:
+    # The README's real-bug demo (tqdm), answered the way the README says, on every OS.
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e .
+      - name: Replay the README's answers (n n y n n n y) and expect line 322
+        shell: bash
+        run: |
+          printf 'n\nn\ny\nn\nn\nn\ny\n' | qdebug debug --project examples/tqdm --plain --save-dir "" > demo.txt 2>&1 || true
+          grep -E "^Questions: 4 function-level, 3 line-level" demo.txt && grep -E "line +322 " demo.txt \
+            || { cat demo.txt; exit 1; }
+
+  docker:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t qdebug .
+      - name: The container's default command is the README's demo
+        run: |
+          printf 'n\nn\ny\nn\nn\nn\ny\n' | docker run -i --rm qdebug > demo.txt 2>&1 || true
+          grep -q "tqdm/_tqdm.py, line 322" demo.txt || { cat demo.txt; exit 1; }
+
   package:
     needs: lint
     runs-on: ubuntu-latest

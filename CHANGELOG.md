@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- The README demo is now a real bug in a real library: tqdm bug 4 from BugsInPy, vendored in
+  `examples/tqdm` with a small stand-in for the `nose` helpers its 2019 tests import, so they run with
+  pytest on Python 3.10+. qdebug finds the line the maintainers fixed in 7 questions.
+- A `Dockerfile` runs qdebug (and the demo, by default) the same way on any computer.
+- CI replays the README's demo answers on Linux, Windows and macOS, and builds and runs the Docker image.
+
 ## 0.2.0
 
 ### Claude, optionally
