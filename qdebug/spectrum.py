@@ -7,7 +7,7 @@ import warnings
 from dataclasses import dataclass, field
 
 from qdebug.runner import invoke
-from qdebug.tracer import TRANSPARENT_FLAGS, TRANSPARENT_NAMES
+from qdebug.tracer import TRANSPARENT_FLAGS, TRANSPARENT_NAMES, code_qualname
 
 SKIP_DIRS = {"__pycache__", ".pytest_cache", ".git", ".venv", "venv", "node_modules",
              "site-packages", "dist-packages"}
@@ -93,7 +93,9 @@ def scan_functions(project):
                 node = defs.get(code.co_firstlineno)
                 if node is None or node.name != code.co_name:
                     continue  # class bodies and other non-function code objects
-                qualname = getattr(code, "co_qualname", code.co_name)
+                # co_qualname is 3.11+; before that it is rebuilt from the source, exactly
+                # as the tracer does, so that both sides build the same function keys
+                qualname = code_qualname(code)
                 key = f"{relfile}::{qualname}"
                 index[key] = FuncInfo(
                     func=key, file=relfile, qualname=qualname, line=code.co_firstlineno,

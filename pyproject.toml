@@ -32,7 +32,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-ai = ["anthropic>=2.9"]
+# the Anthropic SDK (through httpx2) needs Python 3.11+; qdebug itself runs on 3.10
+ai = ["anthropic>=2.9; python_version >= '3.11'"]
 dev = ["ruff>=0.6", "build"]
 
 [project.scripts]

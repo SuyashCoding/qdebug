@@ -50,7 +50,8 @@ pip install qdebug            # by hand: needs only pytest and rich
 pip install "qdebug[ai]"      # adds the Anthropic SDK for the Claude features
 ```
 
-Python 3.10+. The project you debug can run on its own interpreter (`--python`), down to Python 3.8.
+Python 3.10+; the Claude features need 3.11+, because the Anthropic SDK does. The project you debug can
+run on its own interpreter (`--python`), down to Python 3.8.
 
 ## Use it
 

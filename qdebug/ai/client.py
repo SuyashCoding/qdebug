@@ -8,12 +8,15 @@ ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, or a profile from `ant auth login`.
 
 import json
 import os
+import sys
 from dataclasses import dataclass
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
 DEFAULT_EFFORT = "medium"
-INSTALL_HINT = "pip install 'qdebug[ai]'"
+INSTALL_HINT = ("pip install 'qdebug[ai]'" if sys.version_info >= (3, 11) else
+                "Python 3.11 or newer (the Anthropic SDK needs it; this is Python "
+                f"{sys.version_info.major}.{sys.version_info.minor}), then pip install 'qdebug[ai]'")
 AUTH_HINT = "set ANTHROPIC_API_KEY, or run `ant auth login`"
 
 
