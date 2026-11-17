@@ -167,6 +167,21 @@ outputs are right, the bug is in that call's own code), in the spirit of Enlight
    probability over the candidate lines, so one wrong answer can be outvoted. If that line called another
    function, qdebug checks that callee as well.
 
+### Several failing tests
+
+The Ochiai score assumes one bug: failures caused by a second bug dilute it. So before asking anything,
+qdebug groups the failing tests by the bug that probably causes them ([`qdebug/groups.py`](../qdebug/groups.py)),
+from the coverage it already recorded:
+
+1. Tests that raise the same exception at the same line of project code go together.
+2. A group's *best line* is the line every one of its tests runs that the fewest passing tests run. Two
+   groups merge when some line that all their tests run is run by no more passing tests than the best line
+   of one of them, so one bug there explains both at least as well. Pairs merge best-first.
+
+The session then ranks the debugged test against its own group only (`--no-group` uses every failing test),
+the default test is the cheapest one of the largest group, and the result lists the other failing tests in
+the same group that also ran the code found: the ones the bug probably explains too.
+
 ### Search rules
 
 `--policy tuned` (the default) adds conditional rules on top of that search; `--policy baseline` turns them
@@ -239,6 +254,26 @@ none of the 12 bugs whose failing test makes 100 calls or more. Details are in
 [results/bugsinpy/summary.md](../results/bugsinpy/summary.md); this study has not been re-run with the current
 search.
 
+### Two bugs at once
+
+The benchmarks have one bug per variant, so `qdebug eval-groups` puts two of a suite's bugs into one copy of
+the project (pairs in different functions whose edits don't overlap). A failing test belongs to a bug if it
+also fails with that bug alone and not with the other alone. On 137 random planner pairs:
+
+| | |
+|---|---|
+| single-bug variants kept in one group | 34 / 34 |
+| pairs grouped exactly right (no mixed group, each bug's tests together) | 120 / 137 (88%) |
+| buggy function ranked first: against every failing test → against its own group | 39% → **73%** |
+| buggy function in the top 3: against every failing test → against its own group | 63% → **92%** |
+
+Full sessions (ground-truth oracle) on each bug's test, grouping on vs off: the bug was found in 269 vs 265
+of 274 sessions, the exact line in 231 vs 230, with 7.28 vs 7.57 questions. The ranking gains a lot, the
+sessions little, because the question search usually recovers from a poor starting ranking. On shop
+(10 pairs) the groups were exactly right for 9, and sessions found every bug and line either way. When the
+grouping is wrong, it is almost always one test of the second bug absorbed into the first bug's larger
+group. Tables: [results/multi-bug](../results/multi-bug/planner.md).
+
 Full tables: [results/planner](../results/planner/summary.md), [results/shop](../results/shop/summary.md),
 [baseline](../results/baseline/planner/summary.md), [per-kind tuning](../results/perfect-triage/planner/summary.md).
 
@@ -291,6 +326,8 @@ qdebug eval --suite shop --noise 0.0,0.1,0.2 --seeds 10
 qdebug eval --suite planner --triage category       # tune each bug for its labelled kind (a perfect triage)
 qdebug debug --project benchmarks/shop/variants/bug_04 --oracle truth --fixed benchmarks/shop/project
 qdebug bugsinpy --bugsinpy BugsInPy --work ../bip-work --bugs thefuck:1-5
+qdebug eval-groups --suite planner --pairs 150             # two bugs at once: grouping and ranking
+qdebug eval-groups --suite shop --sessions                 # ... plus full sessions, grouping on and off
 ```
 
 A suite is a directory with `project/` (a correct pytest project) and `bugs.json` (each bug an `old` → `new`
@@ -302,7 +339,7 @@ edit that keeps the line count, with its function, buggy lines and category). Ad
 
 ```
 qdebug/
-  cli.py         command line (qdebug debug | rank | init-agent | eval | variants | bugsinpy)
+  cli.py         command line (qdebug debug | rank | init-agent | eval | eval-groups | variants | bugsinpy)
   session.py     the debugging session: tiers, questions, memoization, undo, zoom, fallback
   strategies.py  information gain (ours), top-down and divide-and-query
   belief.py      posterior over "the bug is in this call's own code", closed-form information gain
@@ -315,11 +352,12 @@ qdebug/
   tracer.py      coverage, execution-tree and line tracers; comparable value snapshots
   spectrum.py    per-test coverage and the static function index
   ranking.py     Ochiai scores and monitoring tiers
+  groups.py      failing tests grouped by the bug that probably causes them
   tree.py        execution tree, call paths, rendering
   ui.py          the friendly terminal interface (rich)
   report.py      text report and session JSON
   suites.py      benchmark suites and their buggy variants
-  evaluate.py    batch experiments; bugsinpy.py: the BugsInPy study
+  evaluate.py    batch experiments; bugsinpy.py: the BugsInPy study; multibug.py: two bugs at once
 benchmarks/      shop (5 bugs) and planner (34 bugs), each project/ + bugs.json
 results/         the tables below, as CSV and markdown
 tests/           unit and end-to-end tests (pytest -m "not e2e" for the fast ones)
@@ -336,8 +374,10 @@ pytest                  # with the end-to-end runs on seeded bugs, about 3 min
 
 ## Limitations
 
-* **One fault, deterministic tests.** qdebug assumes a single fault located in one function's own code, and a
-  test that takes the same path on every run.
+* **One fault per session, deterministic tests.** Each session looks for one fault, located in one function's
+  own code, and needs a test that takes the same path on every run. Several bugs at once are handled by
+  grouping the failing tests and debugging one group at a time; the grouping is a guess (see
+  [Two bugs at once](#two-bugs-at-once)).
 * **Infection must reach the caller's output.** A wrong value that is masked before the caller returns makes
   answers contradict each other; the error rate absorbs this, at the cost of confidence.
 * **Not every bug lives on a line that runs.** A wrong default argument sits on the `def` line, a wrong

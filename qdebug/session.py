@@ -4,6 +4,7 @@ import difflib
 from dataclasses import dataclass, field
 
 from qdebug.belief import Belief
+from qdebug.groups import explained_by, group_failing, group_of
 from qdebug.oracles import Question
 from qdebug.ranking import DEFAULT_TIERS, Ranking
 from qdebug.runner import RunnerError, invoke
@@ -38,6 +39,7 @@ class SessionConfig:
     min_line_confidence: float = 0.0  # line answers below this confidence count as "unknown"
     zoom_search: str | None = None  # line search "binary" or "bayes" (default: the policy's)
     suspect_boost: float = 2.0     # prior multiplier for functions the AI triage names
+    group_tests: bool = True       # rank against the failing tests that probably share the bug
 
 
 @dataclass
@@ -88,6 +90,9 @@ class DebugSession:
         self.ranked_before_zoom = []
         self.found = None
         self.zoom = None
+        self.groups = []             # the failing tests by likely bug (groups.py)
+        self.group = None            # the debugged test's group
+        self.suite_ranking = None    # Ochiai over every failing test
 
     def apply_triage(self, triage):
         """Adopt an AI triage: its bug kind adjusts the tuning, its suspects the prior.
@@ -109,9 +114,10 @@ class DebugSession:
         cfg = self.config
         self.functions = scan_functions(cfg.project)
         self.spectrum = collect_spectrum(cfg.project, run=self.run)
-        self.ranking = Ranking(self.spectrum, self.functions)
+        self.ranking = self.suite_ranking = Ranking(self.spectrum, self.functions)
         if not self.spectrum.failing:
             raise SessionError(f"no failing test in {cfg.project}")
+        self.groups = group_failing(self.spectrum, self.functions)
 
     def prepare(self):
         cfg = self.config
@@ -128,6 +134,11 @@ class DebugSession:
             self.test_id = self.focused_test().nodeid
         else:
             self.test_id = failing[0]
+        self.group = group_of(self.groups, self.test_id)
+        if (cfg.group_tests and self.group is not None and self.group.reason != "no project code"
+                and len(self.group) < len(failing)):
+            # the other groups' failures probably come from other bugs: leave them out
+            self.ranking = Ranking(self.spectrum, self.functions, failing=self.group.tests)
         self.failure_text = self.spectrum.tests[self.test_id].failure
         plain = self.run(cfg.project, "plain", test=self.test_id)
         self.untraced_time = next(iter(plain["tests"].values())).get("call_time", 0.0)
@@ -152,7 +163,35 @@ class DebugSession:
         return sorted(failing, key=lambda test: (size(test), order[test.nodeid]))
 
     def focused_test(self):
+        """The test to debug when none was chosen: the cheapest of the largest group.
+
+        Fixing the bug behind the largest group fixes the most failures.
+        """
+        if self.config.group_tests and self.groups:
+            return self.groups[0].representative
         return self.ranked_failing()[0]
+
+    def grouped_failing(self):
+        """The failing tests in debugging order, group by group: [(group, [tests])]."""
+        if not self.groups:
+            return [(None, self.ranked_failing())]
+        return [(group, list(group.tests)) for group in self.groups]
+
+    def also_explained(self):
+        """Other failing tests the bug found probably explains too.
+
+        A test can only fail because of this bug if it ran the code found, but
+        running it is not enough (many tests run shared code), so with grouping
+        on it must also be in this test's group.
+        """
+        found, zoom = self.found, self.zoom
+        if found is None or self.spectrum is None or self.basis == "no_project_code":
+            return []
+        lines = zoom.region if zoom is not None and zoom.status == "localized" else None
+        ran = explained_by(self.spectrum, self.test_id, found.file, lines=lines, func=found.func)
+        if self.config.group_tests and self.group is not None:
+            ran = [t for t in ran if t in self.group]
+        return ran
 
     def passing_examples(self, func, like=None, limit=3, tests=3, pool=30):
         """Calls of func recorded in passing tests: [(inputs, output text, test id)].

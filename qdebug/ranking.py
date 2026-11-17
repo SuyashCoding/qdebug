@@ -16,11 +16,14 @@ class Ranking:
     """SBFL ranking of a project's (non-test) functions and lines.
 
     functions: {func key: FuncInfo} from spectrum.scan_functions.
+    failing: the failing tests to rank for (default: all of them). Ranking
+    one group of failures that share a bug keeps the other bugs' failures
+    from diluting its scores (see groups.py).
     """
 
-    def __init__(self, spectrum, functions):
+    def __init__(self, spectrum, functions, failing=None):
         self.functions = {k: f for k, f in functions.items() if not f.is_test}
-        failing = spectrum.failing
+        failing = spectrum.failing if failing is None else list(failing)
         passing = spectrum.passing
         self.total_failed = len(failing)
         self.total_passed = len(passing)

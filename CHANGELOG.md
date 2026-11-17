@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Several failing tests, several bugs.** qdebug groups the failing tests by the bug that probably causes
+  them (same crash location, or a rarely-passed line they all run) and shows the groups when you pick a test.
+  The session ranks code against the chosen test's group only, so another bug's failures don't dilute it, and
+  the result says which other failures the bug found probably explains and which need another session.
+  `--no-group` turns it off; `qdebug rank` also prints the groups.
+- `qdebug eval-groups` puts two seeded bugs into one project and measures the grouping, the ranking and full
+  sessions with grouping on and off (`results/multi-bug/`). On 137 planner pairs the groups were exactly right
+  for 88%, and the buggy function ranked first for 73% of bugs instead of 39%. Single-bug results are unchanged.
+
 - The README demo is now a real bug in a real library: tqdm bug 4 from BugsInPy, vendored in
   `examples/tqdm` with a small stand-in for the `nose` helpers its 2019 tests import, so they run with
   pytest on Python 3.10+. qdebug finds the line the maintainers fixed in 7 questions.

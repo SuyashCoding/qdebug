@@ -557,6 +557,32 @@ qdebug debug
 Type `exit` to leave the container. Changes to your project's files inside `/work` are real changes to the
 folder on your computer. Anything you install inside the container is gone when you leave it.
 
+### When several tests fail
+
+Often one bug makes several tests fail, and a project can have more than one bug at a time. qdebug guesses
+which failing tests share a bug and shows them in groups:
+
+```text
+QDebug thinks these failures come from 2 different bugs. Debug one test from a group: its bug probably
+explains the rest of that group.
+Probable bug 1 (4 tests): they all run shop/shipping.py:41
+  1  tests/test_shipping.py::test_zone_eu         AssertionError: assert 'international' == 'eu'
+  2  tests/test_shipping.py::test_zone_international  AssertionError: assert 'eu' == 'international'
+  3  tests/test_shipping.py::test_shipping_eu_parcel  AssertionError: assert 3499 == 2199
+  4  tests/test_invoice.py::test_eu_invoice       AssertionError: assert 'international' == 'eu'
+Probable bug 2 (2 tests): they all run shop/pricing.py:27
+  5  tests/test_pricing.py::test_line_total_bulk  AssertionError: assert 1890 == 1791
+  6  tests/test_invoice.py::test_bulk_invoice_qty_ten  AssertionError: assert 1890 == 1791
+```
+
+Pick one test from a group. qdebug then uses only that group's tests to decide where to look first, so the
+other bug doesn't send it the wrong way. At the end it tells you which other failing tests the bug it found
+probably explains too, and which probably have a different bug: fix the first one, run the tests again,
+and run qdebug on what still fails.
+
+The groups are a guess: they're right most of the time, but not always. You can always pick any test, and
+`--no-group` turns the grouping off.
+
 ### Handy extras
 
 - To just see which functions look most suspicious, without any questions: `qdebug rank --project some-project`

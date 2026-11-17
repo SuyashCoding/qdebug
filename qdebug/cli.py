@@ -1,4 +1,4 @@
-"""Command line entry point: qdebug {debug,rank,eval,variants,init-agent,bugsinpy} ...
+"""Command line entry point: qdebug {debug,rank,eval,eval-groups,variants,init-agent,bugsinpy} ...
 
 `qdebug debug` asks you the questions by default. With --oracle claude Claude
 answers them, with --oracle hybrid Claude answers the ones it is sure about
@@ -11,6 +11,7 @@ import os
 import sys
 
 from qdebug import __version__
+from qdebug.groups import format_groups, group_failing
 from qdebug.oracles import GroundTruthOracle, HumanOracle, NoisyOracle
 from qdebug.ranking import DEFAULT_TIERS, Ranking
 from qdebug.report import build_report, format_report, save_session
@@ -140,11 +141,12 @@ def check_project(path):
 def cmd_rank(args):
     check_project(args.project)
     spectrum = collect_spectrum(args.project, run=make_run(args))
-    ranking = Ranking(spectrum, scan_functions(args.project))
+    functions = scan_functions(args.project)
+    ranking = Ranking(spectrum, functions)
     print(f"{len(spectrum.tests)} tests: {len(spectrum.failing)} failing, "
           f"{len(spectrum.passing)} passing; {len(ranking.ranked_functions)} project functions")
-    for t in spectrum.failing:
-        print(f"  FAILED {t.nodeid}")
+    if spectrum.failing:
+        print(format_groups(group_failing(spectrum, functions)))
     print("\nFunctions by Ochiai suspiciousness:")
     print(f"  {'#':>3}  {'ochiai':>6}  {'maxline':>7}  {'fail':>4}  {'pass':>4}  function")
     for rank, func, score, maxline, nf, np in ranking.function_table(args.limit):
@@ -195,7 +197,7 @@ def session_config(args):
         threshold=args.threshold, stop_level=args.stop_level, max_repr=args.max_repr,
         zoom=not args.no_zoom, use_inadmissible=not args.no_inadmissible, ascii=args.ascii,
         policy=args.policy, assertion_weight=args.assertion_weight,
-        repeat_discount=args.repeat_discount, bug_kind=args.bug_kind)
+        repeat_discount=args.repeat_discount, bug_kind=args.bug_kind, group_tests=not args.no_group)
 
 
 def save_dir(args):
@@ -271,10 +273,11 @@ def debug_with_ui(args, config, run, ui, assistant):
         session.collect()
     ui.test_summary(session.spectrum)
     if not config.test and args.oracle in ("human", "hybrid"):
-        config.test = ui.choose_test(session.ranked_failing())
+        config.test = ui.choose_test(session.grouped_failing())
     with ui.working("Getting ready..."):
         session.prepare()
     ui.failing_test(session.test_id, session.failure_text)
+    ui.group_note(session)
     assistant = run_triage(session, assistant, args, ui)
     oracle_kind = args.oracle if assistant is not None or args.oracle not in AI_ORACLES else "human"
     session.oracle = make_oracle(oracle_kind, session.test_id, args.fixed, args.noise, args.seed,
@@ -294,6 +297,8 @@ def debug_plain(args, config, run, assistant):
                                  ai_confidence=args.ai_confidence)
     print(f"Debugging {session.test_id} with the {args.strategy} strategy "
           f"({len(session.spectrum.failing)} failing / {len(session.spectrum.tests)} tests)")
+    if len(session.spectrum.failing) > 1:
+        print(format_groups(session.groups))
     if args.oracle in ("human", "hybrid"):
         print("Answer each question about a single call: is its output correct for its inputs?")
         print("Type h for help.")
@@ -337,6 +342,13 @@ def cmd_eval(args):
         bug_ids=set(args.bug) or None, triage=args.triage, noise_model=args.noise_model,
         overconfidence=args.overconfidence, confidence_use=args.confidence_use,
         zoom_search=args.zoom_search)
+    return 0
+
+
+def cmd_eval_groups(args):
+    from qdebug.multibug import run_suite
+    for suite in _suites(args):
+        print(run_suite(suite, pairs=args.pairs, sessions=args.sessions, out_dir=args.out, seed=args.seed))
     return 0
 
 
@@ -427,6 +439,9 @@ def build_parser():
     g.add_argument("--no-zoom", action="store_true", help="stop at the function, skip the line search")
     g.add_argument("--no-inadmissible", action="store_true",
                    help="treat 'inputs are already wrong' answers as plain 'unknown'")
+    g.add_argument("--no-group", action="store_true",
+                   help="rank against every failing test, not only those that probably share "
+                        "this test's bug")
     g = p.add_argument_group("display and experiments")
     g.add_argument("--max-repr", type=int, default=300, help="characters shown per value")
     g.add_argument("--ascii", action="store_true", help="ASCII-only tree markers")
@@ -474,6 +489,17 @@ def build_parser():
     p.add_argument("--zoom-search", choices=["binary", "bayes"], default=None,
                    help="line search (default: the policy's)")
     p.set_defaults(func=cmd_eval)
+
+    p = sub.add_parser("eval-groups", help="two bugs at once: measure the grouping of failing tests")
+    p.add_argument("--suite", action="append", default=[], metavar="DIR",
+                   help="benchmark suite; default: every suite in --benchmarks")
+    p.add_argument("--benchmarks", default="benchmarks", help="where suites are found by name")
+    p.add_argument("--pairs", type=int, default=None, help="at most this many random bug pairs per suite")
+    p.add_argument("--seed", type=int, default=0, help="which random pairs")
+    p.add_argument("--sessions", action="store_true",
+                   help="also run full sessions (ground-truth oracle) with grouping on and off")
+    p.add_argument("--out", default="results/multi-bug")
+    p.set_defaults(func=cmd_eval_groups)
 
     p = sub.add_parser("eval-ai", help="measure Claude as the oracle on the benchmark suites (costs API usage)")
     p.add_argument("--suite", action="append", default=[], metavar="DIR")

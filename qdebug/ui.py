@@ -127,15 +127,38 @@ class UI:
         self.console.print(summary)
 
     def choose_test(self, failing):
-        """Ask which failing test to debug; returns its node id."""
+        """Ask which failing test to debug; returns its node id.
+
+        failing: TestRecords, or [(group, tests)] from DebugSession.grouped_failing().
+        """
+        grouped = failing if failing and isinstance(failing[0], tuple) else [(None, list(failing))]
+        failing = [test for _, tests in grouped for test in tests]
         if len(failing) == 1:
             return failing[0].nodeid
-        table = Table.grid(padding=(0, 2))
-        for i, test in enumerate(failing, 1):
-            reason = failure_summary(test.failure)
-            table.add_row(Text(str(i), style=f"bold {ACCENT}"), Text(test.nodeid, style="red"),
-                          Text(truncate(reason[0], 60) if reason else "", style="dim"))
-        self.console.print(table)
+        groups = [group for group, _ in grouped if group is not None]
+        if len(groups) > 1:
+            self.console.print(Text.assemble(
+                "QDebug thinks these failures come from ", (f"{len(groups)} different bugs", "bold"),
+                ". Debug one test from a group: its bug probably explains the rest of that group."))
+        elif groups:
+            self.console.print(Text("QDebug thinks these failures all come from the same bug, so any of "
+                                    "them will do. The first needs the fewest questions."))
+        number = 0
+        for index, (group, tests) in enumerate(grouped, 1):
+            if len(groups) > 1:
+                what = group.describe()
+                label = (f"Probable bug {index} ({len(tests)} test{'s' if len(tests) != 1 else ''})"
+                         + (f": {what}" if what else ""))
+                if group.reason == "no project code":
+                    label = f"Can't be debugged: {what}"
+                self.console.print(Text(label, style=f"bold {ACCENT}"))
+            table = Table.grid(padding=(0, 2))
+            for test in tests:
+                number += 1
+                reason = failure_summary(test.failure)
+                table.add_row(Text(f"  {number}", style=f"bold {ACCENT}"), Text(test.nodeid, style="red"),
+                              Text(truncate(reason[0], 60) if reason else "", style="dim"))
+            self.console.print(table)
         while True:
             try:
                 choice = self.console.input(f"  Which test should we debug? (1-{len(failing)}) > ").strip()
@@ -144,6 +167,21 @@ class UI:
             if choice.isdigit() and 1 <= int(choice) <= len(failing):
                 return failing[int(choice) - 1].nodeid
             self.console.print(Text("  Please type one of the numbers above.", style="yellow"))
+
+    def group_note(self, session):
+        """Say which other failures QDebug treats as the same bug, when there are other bugs too."""
+        group, failing = session.group, session.spectrum.failing
+        if group is None or len(group) == len(failing) or group.reason == "no project code":
+            return
+        if not session.config.group_tests:
+            return
+        same = len(group) - 1
+        other = len(failing) - len(group)
+        text = (f"  QDebug thinks {same} other failing test{'s have' if same != 1 else ' has'} the same bug "
+                if same else "  QDebug thinks this test's bug is different from the other failures' ")
+        text += (f"and {other} {'have' if other != 1 else 'has'} a different one, so it looks for this "
+                 "bug using only this test's group.")
+        self.console.print(Text(text, style="dim"))
 
     def failing_test(self, test_id, failure_text):
         body = [Text(test_id, style="bold")]
@@ -368,6 +406,34 @@ class UI:
         self.console.print(Text.assemble(
             (f"{questions} question{'s' if questions != 1 else ''}", "bold"),
             f" to search a project with {total_functions:,} functions, without reading its code."))
+        self.other_failures(session)
+
+    def other_failures(self, session):
+        """Which other failing tests this bug may explain, and which probably need another session."""
+        others = [t.nodeid for t in session.spectrum.failing if t.nodeid != session.test_id]
+        if not others:
+            return
+        same = session.also_explained()
+        rest = [t for t in others if t not in same]
+        self.console.print()
+        if same:
+            self.console.print(Text.assemble(
+                ("This bug probably also explains ", "green"),
+                (f"{len(same)} other failing test{'s' if len(same) != 1 else ''}", "bold green"),
+                (" (same group, and ran this code too):", "green")))
+            for nodeid in same[:5]:
+                self.console.print(Text(f"  {nodeid}", style="dim"))
+            if len(same) > 5:
+                self.console.print(Text(f"  ... and {len(same) - 5} more", style="dim"))
+        if rest:
+            self.console.print(Text.assemble(
+                (f"{len(rest)} failing test{'s' if len(rest) != 1 else ''}", "bold yellow"),
+                (" probably have a different bug. Fix this one, run the tests again, and run "
+                 "QDebug on what still fails:", "yellow")))
+            for nodeid in rest[:5]:
+                self.console.print(Text(f"  {nodeid}", style="dim"))
+            if len(rest) > 5:
+                self.console.print(Text(f"  ... and {len(rest) - 5} more", style="dim"))
 
 
 class FriendlyOracle(HumanOracle):

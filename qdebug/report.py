@@ -73,6 +73,11 @@ def build_report(session, assistant=None):
         "nodes_monitored": tree.monitored_count(),
         "tree": session.render_tree(found.id if found is not None and found.path in tree.by_path else None),
         "bug_kind": session.config.bug_kind or (session.triage.bug_kind if session.triage else None),
+        "groups": [{"tests": [t.nodeid for t in g.tests], "reason": g.reason, "why": g.describe()}
+                   for g in session.groups],
+        # how many failing tests the ranking used, when only this test's group
+        "ranked_against": ranking.total_failed if ranking is not session.suite_ranking else None,
+        "also_explained": session.also_explained(),
         "ai": None,
     }
     if assistant is not None:
@@ -110,7 +115,19 @@ def format_report(report):
                    + ("this is SBFL's best guess" if report["basis"] == "sbfl"
                       else "the test did not reach project code"))
     out.append("")
-    out.append("SBFL ranking (Ochiai, whole suite):")
+    groups = report.get("groups") or []
+    if sum(len(g["tests"]) for g in groups) > 1:
+        out.append(f"Failing tests by likely bug ({len(groups)} group{'s' if len(groups) != 1 else ''}):")
+        for i, g in enumerate(groups, 1):
+            mark = "  <- this test's group" if report["test"] in g["tests"] else ""
+            out.append(f"  group {i}: {len(g['tests'])} test(s)" + (f", {g['why']}" if g["why"] else "")
+                       + mark)
+            out += [f"    {t}" for t in g["tests"]]
+        out.append("")
+    if report.get("ranked_against"):
+        out.append(f"SBFL ranking (Ochiai, this test's group of {report['ranked_against']} failing tests):")
+    else:
+        out.append("SBFL ranking (Ochiai, whole suite):")
     for row in report["sbfl_functions"]:
         out.append(f"  {row['rank']:>2}. {row['ochiai']:.3f}  {row['func']}  "
                    f"(failed {row['failed']}, passed {row['passed']})")
@@ -153,6 +170,9 @@ def format_report(report):
         if exp["fix"].strip():
             out.append("  suggested fix:")
             out += [f"    {line}" for line in exp["fix"].splitlines()]
+    if report.get("also_explained"):
+        out.append("Other failing tests that ran this code (the same bug may explain them):")
+        out += [f"  {t}" for t in report["also_explained"]]
     out.append("")
     out.append(f"Questions: {report['questions']} function-level, {report['line_questions']} line-level")
     out.append("Transcript:")
