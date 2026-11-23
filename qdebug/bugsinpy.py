@@ -83,10 +83,42 @@ def sh(cmd, cwd=None, timeout=1800, check=True):
     return proc
 
 
+def read_text(path):
+    """A BugsInPy file as text, whatever its encoding: some are UTF-16 (from Windows), most UTF-8."""
+    with open(path, "rb") as fh:
+        data = fh.read()
+    if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+        text = data.decode("utf-16", errors="replace")
+    elif data.startswith(b"\xef\xbb\xbf"):
+        text = data[3:].decode("utf-8", errors="replace")
+    else:
+        text = data.decode("utf-8", errors="replace")
+    return text.replace("\x00", "").replace("\r\n", "\n")
+
+
+class _Lines:
+    """open()-like context manager over read_text, for `with ... as fh: for line in fh`."""
+
+    def __init__(self, path):
+        self.lines = read_text(path).splitlines(keepends=True)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def __iter__(self):
+        return iter(self.lines)
+
+    def read(self):
+        return "".join(self.lines)
+
+
 def read_info(path):
     """key="value" lines of a BugsInPy .info file."""
     info = {}
-    with open(path, encoding="utf-8", errors="replace") as fh:
+    with _Lines(path) as fh:
         for line in fh:
             m = re.match(r'\s*(\w+)\s*=\s*"([^"]*)"', line)
             if m:
@@ -282,7 +314,7 @@ def requirements(bug_dir, project=None):
     reqs = []
     path = os.path.join(bug_dir, "requirements.txt")
     if os.path.exists(path):
-        with open(path, encoding="utf-8", errors="replace") as fh:
+        with _Lines(path) as fh:
             for line in fh:
                 line = line.strip()
                 if not line or line.startswith(("#", "-e", "git+")) or "@ file" in line:
@@ -292,7 +324,7 @@ def requirements(bug_dir, project=None):
                     reqs.append(line)
     setup = os.path.join(bug_dir, "setup.sh")
     if os.path.exists(setup):
-        with open(setup, encoding="utf-8", errors="replace") as fh:
+        with _Lines(setup) as fh:
             for line in fh:
                 m = re.match(r"\s*pip3?\s+install\s+(.+)", line)
                 if m:
@@ -405,7 +437,7 @@ def evaluate_bug(ws, envs, project, bug, strategies, timeout=600, log=print, run
         env, version, env_note = envs.get(project, bug, info)
         base["python"] = version
         bug_dir = ws.bug_dir(project, bug)
-        with open(os.path.join(bug_dir, "run_test.sh"), encoding="utf-8", errors="replace") as fh:
+        with _Lines(os.path.join(bug_dir, "run_test.sh")) as fh:
             tests = parse_tests(fh.read(), buggy)
         if not tests:
             raise SetupError("no test found in run_test.sh")
@@ -429,7 +461,7 @@ def evaluate_bug(ws, envs, project, bug, strategies, timeout=600, log=print, run
         fixed_outcome = outcome(run, fixed, failing[0])
         if fixed_outcome != "passed":
             return [dict(base, status="not reproducible", detail=f"fixed: {fixed_outcome} ({env_note})")]
-        with open(os.path.join(bug_dir, "bug_patch.txt"), encoding="utf-8", errors="replace") as fh:
+        with _Lines(os.path.join(bug_dir, "bug_patch.txt")) as fh:
             locations = patch_locations(fh.read())
         functions = scan_functions(buggy)
         targets = buggy_functions(functions, locations)

@@ -143,3 +143,12 @@ def test_a_test_that_never_reaches_project_code_is_reported(tmp_path):
     session.prepare()
     with pytest.raises(SessionError, match="before its body ran.*no attribute 'helper'"):
         session.run_session()
+
+
+def test_requirements_written_as_utf16_are_read(tmp_path):
+    # some BugsInPy projects (black, fastapi, luigi, sanic, scrapy) ship UTF-16 files from Windows
+    text = "aiohttp==3.6.2\r\nblack==19.3b0\r\nattrs==19.3.0\r\n"
+    (tmp_path / "requirements.txt").write_bytes(text.encode("utf-16"))
+    reqs = requirements(str(tmp_path), "black")
+    assert reqs[:2] == ["aiohttp==3.6.2", "attrs==19.3.0"]  # the project's own package is left out
+    assert all("\x00" not in r for r in reqs)
