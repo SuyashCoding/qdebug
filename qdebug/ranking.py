@@ -12,18 +12,31 @@ def ochiai(failed, passed, total_failed):
     return failed / math.sqrt(total_failed * (failed + passed))
 
 
+def dstar(failed, passed, total_failed, star=2):
+    """DStar (Wong et al. 2014): failed(e)^* / (passed(e) + not-failed(e)); a baseline for studies."""
+    if failed == 0:
+        return 0.0
+    denominator = passed + (total_failed - failed)
+    return float("inf") if denominator == 0 else failed ** star / denominator
+
+
+FORMULAS = {"ochiai": ochiai, "dstar": dstar}
+
+
 class Ranking:
     """SBFL ranking of a project's (non-test) functions and lines.
 
     functions: {func key: FuncInfo} from spectrum.scan_functions.
     failing: the failing tests to rank for (default: all of them). Ranking
     one group of failures that share a bug keeps the other bugs' failures
-    from diluting its scores (see groups.py).
+    from diluting its scores (see groups.py). formula: "ochiai" (used by the
+    search) or "dstar" (a baseline in studies).
     """
 
-    def __init__(self, spectrum, functions, failing=None):
+    def __init__(self, spectrum, functions, failing=None, formula="ochiai"):
         self.functions = {k: f for k, f in functions.items() if not f.is_test}
         failing = spectrum.failing if failing is None else list(failing)
+        score = FORMULAS[formula]
         passing = spectrum.passing
         self.total_failed = len(failing)
         self.total_passed = len(passing)
@@ -43,11 +56,11 @@ class Ranking:
         test_files = {f.file for f in functions.values() if f.is_test}
         lf, lp = counts("lines", lambda e: e[0] not in test_files)
         self.line_counts = {e: (lf.get(e, 0), lp.get(e, 0)) for e in set(lf) | set(lp)}
-        self.line_scores = {e: ochiai(f, p, self.total_failed)
+        self.line_scores = {e: score(f, p, self.total_failed)
                             for e, (f, p) in self.line_counts.items()}
         ff, fp = counts("functions", lambda e: e in self.functions)
         self.func_counts = {k: (ff.get(k, 0), fp.get(k, 0)) for k in self.functions}
-        self.func_scores = {k: ochiai(f, p, self.total_failed)
+        self.func_scores = {k: score(f, p, self.total_failed)
                             for k, (f, p) in self.func_counts.items()}
         self.max_line_score = {}
         for key, info in self.functions.items():

@@ -393,13 +393,22 @@ def cmd_init_agent(args):
 
 
 def cmd_bugsinpy(args):
-    from qdebug.bugsinpy import run_bugsinpy
+    from qdebug.bugsinpy import bug_runs, run_bugsinpy
 
-    run_bugsinpy(args.bugsinpy, args.work, args.bugs,
-                 [s.strip() for s in args.strategies.split(",") if s.strip()],
-                 args.out, timeout=args.timeout, policy=args.policy,
-                 policies=[p.strip() for p in (args.policies or "").split(",") if p.strip()],
-                 assertion_weight=args.assertion_weight, repeat_discount=args.repeat_discount)
+    strategies = [s.strip() for s in args.strategies.split(",") if s.strip()]
+    policies = [p.strip() for p in (args.policies or "").split(",") if p.strip()] or [args.policy]
+    noise = [float(x) for x in args.noise.split(",") if x.strip()]
+    runs = bug_runs(strategies, policies, noise, args.seeds, noise_policy=policies[-1])
+    run_bugsinpy(args.bugsinpy, args.work, args.bugs, strategies, args.out, timeout=args.timeout,
+                 runs=runs, assertion_weight=args.assertion_weight, repeat_discount=args.repeat_discount)
+    return 0
+
+
+def cmd_study_report(args):
+    from qdebug.study import write_report
+    held = [p.strip() for p in args.held_out.split(",") if p.strip()]
+    out = args.out or os.path.join(os.path.dirname(args.results), "study.md")
+    print(f"wrote {write_report(args.results, out, held)}")
     return 0
 
 
@@ -539,8 +548,19 @@ def build_parser():
     p.add_argument("--out", default="results/bugsinpy")
     p.add_argument("--policies", help="run several policies per bug on the same checkout, "
                                       "e.g. baseline,tuned (overrides --policy)")
+    p.add_argument("--noise", default="",
+                   help="also run infogain with the last policy at these answer-error rates, e.g. 0.1,0.2")
+    p.add_argument("--seeds", type=int, default=3, help="seeds per noise level")
     add_policy_options(p, default="baseline")
     p.set_defaults(func=cmd_bugsinpy)
+
+    p = sub.add_parser("study-report", help="the real-bug study report (docs/EVALUATION_PLAN.md) from "
+                                            "the results of qdebug bugsinpy")
+    p.add_argument("--results", required=True, help="results.csv written by qdebug bugsinpy")
+    p.add_argument("--held-out", default="black,fastapi,luigi,sanic,tornado,scrapy",
+                   help="projects reported as the held-out set")
+    p.add_argument("--out", default=None, help="default: study.md next to the results")
+    p.set_defaults(func=cmd_study_report)
     return parser
 
 

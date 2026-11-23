@@ -42,7 +42,9 @@ import time
 import traceback
 
 from qdebug.evaluate import RunCache
-from qdebug.oracles import GroundTruthOracle
+from qdebug.groups import raised_at
+from qdebug.oracles import GroundTruthOracle, NoisyOracle
+from qdebug.ranking import Ranking
 from qdebug.runner import RunnerError, RunOptions, make_runner
 from qdebug.session import DebugSession, SessionConfig, SessionError
 from qdebug.spectrum import scan_functions
@@ -56,7 +58,8 @@ FIELDS = [
     "found_before_zoom", "func_questions", "line_questions", "line_in_region", "region_size",
     "region_lines", "zoom_status", "final_tier", "nodes_total", "nodes_monitored",
     "sbfl_func_rank", "sbfl_line_rank", "functions_total", "stop_reason", "seconds", "basis",
-    "policy",
+    "policy", "noise", "seed", "dstar_func_rank", "dstar_line_rank", "crash_function", "crash_found",
+    "failing_tests",
 ]
 # requirement lines that would install the project itself (it is traced from source) or are bogus
 OWN_PACKAGES = {"pysnooper", "thefuck", "tqdm", "youtube-dl", "youtube_dl", "httpie",
@@ -285,7 +288,7 @@ def requirements(bug_dir, project=None):
                 if not line or line.startswith(("#", "-e", "git+")) or "@ file" in line:
                     continue
                 name = re.split(r"[=<>!~\[ ;]", line, maxsplit=1)[0].lower()
-                if name not in OWN_PACKAGES:
+                if name not in OWN_PACKAGES and name != (project or "").lower():
                     reqs.append(line)
     setup = os.path.join(bug_dir, "setup.sh")
     if os.path.exists(setup):
@@ -358,8 +361,43 @@ def outcome(run, project, test):
     return next(iter(tests.values()))["outcome"] if tests else "not collected"
 
 
-def evaluate_bug(ws, envs, project, bug, strategies, timeout=600, log=print, **session_options):
-    """Rows (one per strategy, or one status row) for one BugsInPy bug."""
+def bug_runs(strategies, policies, noise_levels=(), seeds=1, noise_strategy="infogain", noise_policy="tuned"):
+    """(strategy, policy, noise, seed) of every session per bug: each strategy and policy without
+    noise, plus noise_strategy/noise_policy at each noise level with `seeds` seeds."""
+    runs = [(s, p, 0.0, 0) for p in policies for s in strategies]
+    runs += [(noise_strategy, noise_policy, n, seed) for n in noise_levels if n > 0 for seed in range(seeds)]
+    return runs
+
+
+def baselines(session, targets, locations):
+    """Baselines from the same run: DStar ranks, and the crash location's function."""
+    dstar = Ranking(session.spectrum, session.functions, formula="dstar")
+    func_ranks = [r for r in (dstar.function_rank(t) for t in targets) if r]
+    line_ranks = [r for f, (ls, _) in locations.items() for r in (dstar.line_rank(f, n) for n in ls) if r]
+    project_files = {f.file for f in session.functions.values() if not f.is_test}
+    crash = raised_at(session.failure_text, project_files)
+    crash_func = ""
+    if crash is not None:
+        _, relfile, line = crash
+        inside = [f for f in session.functions.values()
+                  if f.file == relfile and f.line <= line <= f.end_line and not f.is_test]
+        if inside:
+            crash_func = min(inside, key=lambda f: f.end_line - f.line).func
+    return {
+        "dstar_func_rank": min(func_ranks) if func_ranks else "",
+        "dstar_line_rank": min(line_ranks) if line_ranks else "",
+        "crash_function": crash_func,
+        "crash_found": int(bool(crash_func and crash_func in targets)),
+        "failing_tests": len(session.spectrum.failing),
+    }
+
+
+def evaluate_bug(ws, envs, project, bug, strategies, timeout=600, log=print, runs=None, **session_options):
+    """Rows (one per session, or one status row) for one BugsInPy bug.
+
+    runs: (strategy, policy, noise, seed) tuples (default: each strategy with the
+    session_options policy, without noise).
+    """
     base = {"project": project, "bug": bug, "status": "ok", "detail": ""}
     start = time.perf_counter()
     try:
@@ -416,17 +454,24 @@ def evaluate_bug(ws, envs, project, bug, strategies, timeout=600, log=print, **s
     cache = RunCache(run=run)
     policies = session_options.pop("policies", None) or [session_options.pop("policy", "baseline")]
     session_options.pop("policy", None)
-    for strategy, policy in [(s, p) for p in policies for s in strategies]:
+    if runs is None:
+        runs = bug_runs(strategies, policies)
+    extra = None
+    for strategy, policy, noise, seed in runs:
         t0 = time.perf_counter()
-        row = dict(base, strategy=strategy, policy=policy)
+        row = dict(base, strategy=strategy, policy=policy, noise=noise, seed=seed)
         try:
             session = DebugSession(SessionConfig(project=buggy, test=failing[0], strategy=strategy,
                                                  policy=policy, **session_options),
                                    oracle=None, run=cache, out=lambda *a, **k: None)
             session.prepare()
-            session.oracle = GroundTruthOracle(fixed, session.test_id, run=cache)
+            oracle = GroundTruthOracle(fixed, session.test_id, run=cache)
+            session.oracle = NoisyOracle(oracle, noise, seed) if noise > 0 else oracle
             session.run_session()
             row.update(session_row(session, targets, locations))
+            if extra is None:
+                extra = baselines(session, targets, locations)
+            row.update(extra)
         except SessionError as exc:
             text = str(exc)
             status = ("no trace" if "before its body ran" in text
@@ -493,6 +538,18 @@ def _median(values):
 
 
 def write_summary(rows, path, strategies):
+    """Short per-bug summary of the noise-free sessions of one policy (tuned if it ran).
+
+    `qdebug study-report` writes the full study with baselines and statistics.
+    """
+    ran = {r.get("policy") or "baseline" for r in rows if r.get("status") == "ok"}
+    policy = "tuned" if "tuned" in ran else (min(ran) if ran else "baseline")
+
+    def main(r):
+        return (r.get("status") != "ok" or ((r.get("policy") or "baseline") == policy
+                                             and float(r.get("noise") or 0) == 0))
+
+    rows = [r for r in rows if main(r)]
     ok = [r for r in rows if r.get("status") == "ok"]
     bugs = sorted({(r["project"], int(r["bug"])) for r in rows})
     status = {}
@@ -500,7 +557,7 @@ def write_summary(rows, path, strategies):
         status.setdefault((r["project"], int(r["bug"])), r["status"])
     out = ["# qdebug on BugsInPy", "",
            f"{len(bugs)} bugs attempted, {sum(1 for s in status.values() if s in REPRODUCED)} "
-           f"reproduced on this machine. GroundTruthOracle, noise 0, assumed ε = 0.1. "
+           f"reproduced on this machine. GroundTruthOracle, noise 0, {policy} policy, assumed ε = 0.1. "
            f"Spectrum: the bug's test file(s) only.", "",
            "## Setup outcome", "", "| status | bugs |", "|---|---|"]
     for name in sorted(set(status.values())):
@@ -583,7 +640,8 @@ def write_summary(rows, path, strategies):
         fh.write("\n".join(out) + "\n")
 
 
-def run_bugsinpy(bugsinpy, work, bug_spec, strategies, out_dir, timeout=600, log=print, **session_options):
+def run_bugsinpy(bugsinpy, work, bug_spec, strategies, out_dir, timeout=600, log=print, runs=None,
+                 **session_options):
     ws = Workspace(bugsinpy, work)
     envs = Environments(ws, log)
     os.makedirs(out_dir, exist_ok=True)
@@ -600,7 +658,8 @@ def run_bugsinpy(bugsinpy, work, bug_spec, strategies, out_dir, timeout=600, log
             rows += done[(project, bug)]
             continue
         log(f"[{i}/{len(selected)}] {project} {bug}")
-        new = evaluate_bug(ws, envs, project, bug, strategies, timeout=timeout, log=log, **session_options)
+        new = evaluate_bug(ws, envs, project, bug, strategies, timeout=timeout, log=log, runs=runs,
+                           **dict(session_options))
         for r in new:
             log(f"    {r.get('strategy') or '-':9} {r['status']}: "
                 + (f"found={r.get('found_function')} line={r.get('line_in_region')} "
