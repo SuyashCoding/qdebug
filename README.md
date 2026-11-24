@@ -16,8 +16,9 @@ It works with Python projects tested with [pytest](https://docs.pytest.org/), th
 tool.
 
 **New to all this?** Read [**qdebug, explained simply**](docs/EXPLAINED.md) first: what it does, how it
-was tested and what came out, in plain English. The short research paper is
-[docs/paper/qdebug-paper.docx](docs/paper/qdebug-paper.docx).
+was tested and what came out, in plain English. The research paper comes in two versions with the same
+content: [a plainer one](docs/paper/qdebug-paper-simple.docx) and
+[the standard one](docs/paper/qdebug-paper.docx).
 
 | | Section | What's in it |
 |---|---|---|
@@ -961,6 +962,7 @@ newer, or set your API key.
 ## Learn more
 
 - [docs/EXPLAINED.md](docs/EXPLAINED.md): qdebug in plain English
+- [docs/paper/qdebug-paper-simple.docx](docs/paper/qdebug-paper-simple.docx): the paper, in plainer words
 - [docs/paper/qdebug-paper.docx](docs/paper/qdebug-paper.docx): the paper
 - [docs/DETAILS.md](docs/DETAILS.md): how it works in depth, every option, and all measured results
 - [docs/EVALUATION_PLAN.md](docs/EVALUATION_PLAN.md): the real-bug study's plan, written before it ran
