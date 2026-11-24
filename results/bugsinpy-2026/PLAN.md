@@ -86,8 +86,7 @@ nothing on real code.
 ## Threats to validity
 
 - **Simulated answers.** The ground-truth oracle is a perfect, consistent answerer. Real people make mistakes
-  (RQ4 simulates that) and may judge values differently. A user study is needed for that:
-  [USER_STUDY.md](USER_STUDY.md).
+  (RQ4 simulates that) and may judge values differently. A user study is needed for that.
 - **Spectrum limited to the bug's test files** weakens the SBFL baselines and qdebug's prior equally.
 - **Environment drift.** Old pins are relaxed when they no longer install; a few bugs may behave differently
   than in 2019–2020. Bugs that don't reproduce are reported, not hidden.
@@ -149,4 +148,4 @@ none was chosen by looking at qdebug's results on a held-out bug.
   for two bugs, so they stay "setup failed".
 
 The final held-out numbers (133 bugs, 105 with a completed session) are in
-[results/bugsinpy-2026/study.md](../results/bugsinpy-2026/study.md).
+[study.md](study.md).

@@ -15,11 +15,6 @@ exact line that is wrong.
 It works with Python projects tested with [pytest](https://docs.pytest.org/), the most common Python test
 tool.
 
-**New to all this?** Read [**qdebug, explained simply**](docs/EXPLAINED.md) first: what it does, how it
-was tested and what came out, in plain English. The research paper comes in two versions with the same
-content: [a plainer one](docs/paper/qdebug-paper-simple.docx) and
-[the standard one](docs/paper/qdebug-paper.docx).
-
 | | Section | What's in it |
 |---|---|---|
 | 1 | [How it works](#1-how-it-works) | The idea in five steps. |
@@ -60,7 +55,7 @@ qdebug combines two older ideas from debugging research and fixes the main weakn
 Two more things it does: if several tests fail, it **groups them by the bug that probably causes each
 group**, so a second bug doesn't throw off the first guess. And a few **search rules learned from failures**
 on practice bugs (the *tuned* policy, the default) cut the number of questions; `--policy baseline` turns
-them off. Full details: [docs/DETAILS.md](docs/DETAILS.md).
+them off. Each rule, and the failure it came from, is described in [qdebug/tuning.py](qdebug/tuning.py).
 
 ---
 
@@ -78,9 +73,11 @@ tools: each bug comes with the code before and after the developers fixed it, an
   also made to answer wrong on purpose 10% and 20% of the time.
 - **Held-out projects.** Six projects qdebug had already been tried on (96 bugs) are the *development* set.
   Six projects it had **never** been run on (black, fastapi, luigi, sanic, tornado, scrapy; 133 bugs) are
-  the *held-out* set, run once with the code frozen. The conclusions rest on the held-out set.
+  the *held-out* set. We finished qdebug's code first and then ran these bugs a single time, without
+  changing any of qdebug's settings after seeing results, so qdebug could not be tuned to fit them. The
+  conclusions rest on the held-out set.
 - **Plan written first.** What to measure, what to compare against, which statistical tests to use and what
-  counts as success were all written down **before** the run: [docs/EVALUATION_PLAN.md](docs/EVALUATION_PLAN.md).
+  counts as success were all written down **before** the run: [results/bugsinpy-2026/PLAN.md](results/bugsinpy-2026/PLAN.md).
   Every change made during the run is listed there under *Deviations*.
 - **Compared with:** the top 1, 3 and 5 entries of the Ochiai and DStar rankings (what fault-localization
   tools give you), the place where the program crashed (what a stack trace gives you), and the classic
@@ -116,10 +113,10 @@ a current machine and 5 failed for other reasons, all reported):
 
 Every table (per research question and per project): [results/bugsinpy-2026/study.md](results/bugsinpy-2026/study.md).
 On the 39 bugs we planted in two practice projects, qdebug finds all 39 functions and 34 exact lines, and
-so does it with **Claude Haiku** answering instead of the robot ([details](docs/DETAILS.md#results)).
+so does it with **Claude Haiku** answering instead of the robot ([details](results/claude-haiku/README.md)).
 
-**Limits to keep in mind:** the robot never gets confused the way people do (a user study is planned in
-[docs/USER_STUDY.md](docs/USER_STUDY.md)); old projects needed some library versions swapped for ones
+**Limits to keep in mind:** the robot never gets confused the way people do (a study with real users is still to be
+done); old projects needed some library versions swapped for ones
 that still install; and qdebug looks for one bug at a time in a test that behaves the same on every run.
 
 ---
@@ -727,7 +724,7 @@ Probable bug 2 (2 tests): they all run shop/pricing.py:27
 
 Pick one test from a group. At the end qdebug says which other failing tests the bug it found probably
 explains too. Fix it, run the tests again, and run qdebug on what still fails. The groups are a guess
-(right for 88% of the two-bug cases we measured); `--no-group` turns them off.
+(right for 88% of the two-bug cases we measured: [results/multi-bug](results/multi-bug/planner.md)); `--no-group` turns them off.
 
 ### Handy options
 
@@ -741,7 +738,7 @@ explains too. Fix it, run the tests again, and run qdebug on what still fails. T
 | `--strategy topdown` or `divide` | the classic question orders, instead of the most useful question |
 | `qdebug rank --project PATH` | just show the most suspicious functions and lines, no questions |
 
-Every option: `qdebug debug -h`, and [docs/DETAILS.md](docs/DETAILS.md).
+Every option: `qdebug debug -h`.
 
 ---
 
@@ -867,7 +864,7 @@ docker run --rm -v "%cd%:/qdebug" -v qdebug-bugsinpy:/work qdebug-bugsinpy qdebu
 That writes `results/my-study/study.md`, in the same format as
 [results/bugsinpy-2026/study.md](results/bugsinpy-2026/study.md). Expect small differences: a few bugs
 behave differently from run to run (these are reported as *nondeterministic*), and the plan's
-[Deviations](docs/EVALUATION_PLAN.md#deviations) explain the setup fixes made during our run.
+[Deviations](results/bugsinpy-2026/PLAN.md#deviations) explain the setup fixes made during our run.
 
 ---
 
@@ -901,9 +898,8 @@ qdebug/            the tool
   evaluate.py, bugsinpy.py, study.py   the experiments and the real-bug study
 benchmarks/        the practice projects (shop: 5 bugs, planner: 34 bugs) and the study's Dockerfile
 examples/          the tqdm and youtube-dl demos
-results/           every result table, as CSV and markdown
-docs/              EXPLAINED.md (plain English), DETAILS.md (everything), EVALUATION_PLAN.md,
-                   USER_STUDY.md (planned), paper/ (the paper and its source)
+results/           every result table, as CSV and markdown; bugsinpy-2026/ holds the real-bug study,
+                   its plan (PLAN.md) and its report (study.md)
 tests/             unit and end-to-end tests
 ```
 
@@ -961,11 +957,10 @@ newer, or set your API key.
 
 ## Learn more
 
-- [docs/EXPLAINED.md](docs/EXPLAINED.md): qdebug in plain English
-- [docs/paper/qdebug-paper-simple.docx](docs/paper/qdebug-paper-simple.docx): the paper, in plainer words
-- [docs/paper/qdebug-paper.docx](docs/paper/qdebug-paper.docx): the paper
-- [docs/DETAILS.md](docs/DETAILS.md): how it works in depth, every option, and all measured results
-- [docs/EVALUATION_PLAN.md](docs/EVALUATION_PLAN.md): the real-bug study's plan, written before it ran
+- [results/bugsinpy-2026/study.md](results/bugsinpy-2026/study.md): every table of the real-bug study
+- [results/bugsinpy-2026/PLAN.md](results/bugsinpy-2026/PLAN.md): the study's plan, written before it ran
+- [results/claude-haiku/README.md](results/claude-haiku/README.md): Claude Haiku answering the questions
+- [results/multi-bug/planner.md](results/multi-bug/planner.md): grouping failing tests when two bugs are present
 - [CHANGELOG.md](CHANGELOG.md): what changed in each version
 
 qdebug is open source under the [MIT license](LICENSE).

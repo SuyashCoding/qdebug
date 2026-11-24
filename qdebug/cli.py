@@ -554,7 +554,7 @@ def build_parser():
     add_policy_options(p, default="baseline")
     p.set_defaults(func=cmd_bugsinpy)
 
-    p = sub.add_parser("study-report", help="the real-bug study report (docs/EVALUATION_PLAN.md) from "
+    p = sub.add_parser("study-report", help="the real-bug study report (results/bugsinpy-2026/PLAN.md) from "
                                             "the results of qdebug bugsinpy")
     p.add_argument("--results", required=True, help="results.csv written by qdebug bugsinpy")
     p.add_argument("--held-out", default="black,fastapi,luigi,sanic,tornado,scrapy",

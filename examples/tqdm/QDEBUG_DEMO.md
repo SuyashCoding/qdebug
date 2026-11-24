@@ -21,6 +21,9 @@ the total when there is one (`if total:`).
   (tqdm's other test files of 2019 also fail on a current Python, for unrelated reasons). tqdm's own code is
   unchanged.
 - On the buggy code, `tests_tqdm.py` has 50 passing tests and one failing test, `test_nototal`.
-- `DEMO.ipynb` and `logo.png` were left out.
+- Files with no Python code that the demo never uses were left out: `DEMO.ipynb`, `logo.png`, the
+  `Makefile`, `tox.ini`, `setup.cfg`, `.coveragerc`, `.readme.rst`, `CONTRIBUTING.md`, `demo.yml`,
+  `requirements-dev.txt` and the man page `tqdm/tqdm.1`. Every Python file is kept: qdebug ranks all of a
+  project's code, so removing one would change the demo's questions.
 
 tqdm is released under the MIT and MPL 2.0 licences; see [LICENCE](LICENCE).

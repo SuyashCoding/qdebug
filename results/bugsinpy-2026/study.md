@@ -1,6 +1,6 @@
 # qdebug on real bugs (BugsInPy)
 
-Plan: [docs/EVALUATION_PLAN.md](../../docs/EVALUATION_PLAN.md). Ground-truth oracle (each call compared with the fixed version); spectrum from the bug's test file(s). "Found" means qdebug's single reported function is a function the fix changes, and "line" that a line the fix changes is in its reported region. CI: 95% Wilson interval. Ties in the SBFL rankings are broken by name.
+Plan: [results/bugsinpy-2026/PLAN.md](../bugsinpy-2026/PLAN.md). Ground-truth oracle (each call compared with the fixed version); spectrum from the bug's test file(s). "Found" means qdebug's single reported function is a function the fix changes, and "line" that a line the fix changes is in its reported region. CI: 95% Wilson interval. Ties in the SBFL rankings are broken by name.
 
 ## Held-out projects (never used while developing qdebug)
 

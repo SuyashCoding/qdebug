@@ -1,4 +1,4 @@
-# The real-bug study (docs/EVALUATION_PLAN.md) in a Linux container, so the downloaded projects and their
+# The real-bug study (results/bugsinpy-2026/PLAN.md) in a Linux container, so the downloaded projects and their
 # tests never run on your own machine, and every run sees the same environment.
 #
 #   docker build -t qdebug-bugsinpy -f benchmarks/bugsinpy.Dockerfile benchmarks

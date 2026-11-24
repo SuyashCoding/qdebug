@@ -1,6 +1,6 @@
 """The real-bug study report: results.csv of `qdebug bugsinpy` -> study.md.
 
-Follows docs/EVALUATION_PLAN.md: every research question answered separately
+Follows results/bugsinpy-2026/PLAN.md: every research question answered separately
 for the development and the held-out projects, paired tests on the same bugs.
 """
 
@@ -216,7 +216,7 @@ def write_report(results_csv, out_path, held_out, development=None):
     held = set(held_out) & projects
     dev = set(development) & projects if development else projects - held
     out = ["# qdebug on real bugs (BugsInPy)", "",
-           "Plan: [docs/EVALUATION_PLAN.md](../../docs/EVALUATION_PLAN.md). Ground-truth oracle (each call "
+           "Plan: [results/bugsinpy-2026/PLAN.md](../bugsinpy-2026/PLAN.md). Ground-truth oracle (each call "
            "compared with the fixed version); spectrum from the bug's test file(s). \"Found\" means qdebug's "
            "single reported function is a function the fix changes, and \"line\" that a line the fix changes is "
            "in its reported region. CI: 95% Wilson interval. Ties in the SBFL rankings are broken by name.", ""]

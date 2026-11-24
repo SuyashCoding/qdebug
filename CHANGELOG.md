@@ -3,7 +3,7 @@
 ## Unreleased
 
 - **The real-bug study.** qdebug was run on 229 BugsInPy bugs following a plan written before the run
-  (`docs/EVALUATION_PLAN.md`). On the 105 completed bugs of six held-out projects it named the buggy function
+  (`results/bugsinpy-2026/PLAN.md`). On the 105 completed bugs of six held-out projects it named the buggy function
   for 47% against 22% for Ochiai's top entry (p < 0.001); tables in `results/bugsinpy-2026/study.md`. The
   study's tooling: `qdebug bugsinpy --policies --noise --seeds`, `qdebug study-report`, and
   `benchmarks/bugsinpy.Dockerfile`, which keeps the downloaded projects inside a container.
@@ -11,7 +11,6 @@
   stop recording.
 - A second demo, a wrong-value bug 7 calls deep in youtube-dl (`examples/youtube-dl`), with its own
   Dockerfile; CI replays its answers too.
-- `docs/EXPLAINED.md` explains qdebug and its evaluation in plain English, and `docs/paper/` holds the paper.
 
 - **Several failing tests, several bugs.** qdebug groups the failing tests by the bug that probably causes
   them (same crash location, or a rarely-passed line they all run) and shows the groups when you pick a test.
@@ -62,8 +61,7 @@
 ### Search
 
 - The line search weighs answers instead of trusting each one (`--zoom-search bayes`, in the tuned
-  policy): one wrong answer about the variables is usually outvoted rather than fatal. See
-  [results/simulated-oracle.md](results/simulated-oracle.md).
+  policy): one wrong answer about the variables is usually outvoted rather than fatal.
 - Fixtures are traced: project code that a fixture calls is part of the execution tree, so bugs
   that surface during test setup can be found (`--no-trace-setup` for the old behaviour).
 - New rules in the `tuned` policy (now the default for `eval` too): debug the failing test with the
@@ -82,7 +80,7 @@
   checks them. A second suite, `planner`, has 34 seeded bugs of many kinds.
 - Session files go to `<project>/.qdebug/sessions/` by default.
 - A beginner-friendly README: installation on Windows, macOS and Linux, a step-by-step demo answered by
-  hand, and how to add a Claude API key. The full description moved to `docs/DETAILS.md`.
+  hand, and how to add a Claude API key.
 - Line questions now say plainly that being at a line a correct program would not reach counts as wrong.
 - Lint (ruff), CI on Linux, Windows and macOS, and tests for every new rule and the AI code (a fake
   client, and the real SDK against a local stub server).
