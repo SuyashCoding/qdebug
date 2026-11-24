@@ -145,6 +145,15 @@ def test_safe_repr_and_snapshots():
     assert len(s["short"]) == 20 and len(s["full"]) == 1002
 
 
+def test_safe_repr_of_a_class_without_a_module():
+    # pydantic creates model classes whose __module__ is None (found on fastapi in the real-bug study):
+    # rendering one used to raise inside the trace function and break the test being debugged
+    Item = type("Item", (), {"__init__": lambda self: setattr(self, "name", "valid")})
+    Item.__module__ = None
+    assert safe_repr(Item()) == "Item(name='valid')"
+    assert safe_repr([Item()]) == "[Item(name='valid')]"
+
+
 def test_alias_groups():
     shared = [1]
     assert alias_groups([("a", shared), ("b", shared), ("c", [1]), ("n", 5), ("m", 5)]) == [["a", "b"]]

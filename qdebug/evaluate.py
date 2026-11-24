@@ -31,20 +31,31 @@ FIELDS = [
 
 
 class RunCache:
-    """Memoizes runner.invoke results (traced runs are deterministic)."""
+    """Memoizes runner.invoke results (traced runs are deterministic).
+
+    A run that fails (a timeout, say) is remembered too, and the same error raised again: otherwise
+    every session of a bug waits out the same timeout.
+    """
 
     def __init__(self, run=invoke):
         self.run = run
         self.cache = {}
+        self.errors = {}
         self.misses = 0
 
     def __call__(self, project, mode, test=None, monitored=None, target=None, max_repr=300):
         key = (os.path.abspath(project), mode, test,
                None if monitored is None else frozenset(monitored), target, max_repr)
+        if key in self.errors:
+            raise self.errors[key]
         if key not in self.cache:
             self.misses += 1
-            self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
-                                       target=target, max_repr=max_repr)
+            try:
+                self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                                           target=target, max_repr=max_repr)
+            except Exception as exc:
+                self.errors[key] = exc
+                raise
         return self.cache[key]
 
 

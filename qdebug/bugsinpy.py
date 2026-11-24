@@ -172,6 +172,8 @@ def parse_tests(run_test_text, project_dir):
             tests += [n for n in (unittest_to_nodeid(t, project_dir) for t in targets) if n]
         elif any(t in ("pytest", "tox", "py.test") for t in tokens):
             tests += [t for t in tokens if "::" in t or t.endswith(".py")]
+    # scrapy bug 1 lists a test class's private helper (…::_get_spiderargs): it is no test
+    tests = [t for t in tests if not t.rsplit("::", 1)[-1].startswith("_")]
     return list(dict.fromkeys(tests))
 
 
@@ -275,6 +277,8 @@ class Workspace:
         done = os.path.join(base, ".ready")
         buggy, fixed = os.path.join(base, "buggy"), os.path.join(base, "fixed")
         if os.path.exists(done):
+            for dest in (buggy, fixed):
+                write_scm_version(dest)
             return buggy, fixed, info
         repo = self.repo(project)
         shutil.rmtree(base, ignore_errors=True)
@@ -293,9 +297,30 @@ class Workspace:
                 os.makedirs(os.path.dirname(target), exist_ok=True)
                 with open(target, "wb") as fh:
                     fh.write(show.stdout)
+            write_scm_version(dest)
         with open(done, "w") as fh:
             fh.write("ok\n")
         return buggy, fixed, info
+
+
+SCM_WRITE_TO = re.compile(r"""["']?write_to["']?\s*[=:]\s*["']([^"']+\.py)["']""")
+
+
+def write_scm_version(project_dir):
+    """Write the version file setuptools_scm would generate on install, if the project names one.
+
+    The study runs each project from its checkout without installing it, so a file such as black's
+    _black_version.py (``write_to`` in setup.py or pyproject.toml) would otherwise never exist.
+    """
+    for name in ("setup.py", "pyproject.toml"):
+        path = os.path.join(project_dir, name)
+        if not os.path.exists(path):
+            continue
+        for rel in SCM_WRITE_TO.findall(read_text(path)):
+            target = os.path.join(project_dir, *rel.split("/"))
+            if not os.path.exists(target):
+                with open(target, "w", encoding="utf-8") as fh:
+                    fh.write('version = __version__ = "0.0.0"\nversion_tuple = (0, 0, 0)\n')
 
 
 # ------------------------------------------------------------ environments
@@ -364,22 +389,61 @@ class Environments:
         done = os.path.join(env, ".qdebug-ready")
         if os.path.exists(done):
             with open(done, encoding="utf-8") as fh:
-                return env, f"{version[0]}.{version[1]}", fh.read().strip()
-        shutil.rmtree(env, ignore_errors=True)
-        sh(["uv", "venv", "-q", "--python", self.interpreter(version), env])
-        req_file = os.path.join(env, "qdebug-requirements.txt")
-        with open(req_file, "w", encoding="utf-8") as fh:
-            fh.write("\n".join(reqs) + "\n")
-        note = "all requirements"
-        if sh(["uv", "pip", "install", "-q", "--python", env, "-r", req_file], check=False).returncode:
-            # one at a time; a pin that does not install falls back to the newest compatible version
-            failed = []
-            for req in reqs:
-                if sh(["uv", "pip", "install", "-q", "--python", env, req], check=False).returncode:
+                note = fh.read().strip()
+            # anything but a plain pinned install was built by an older, pin-losing fallback: build again
+            if note == "all requirements" or note.startswith("v3:"):
+                return env, f"{version[0]}.{version[1]}", note
+        python = self.interpreter(version)
+        exe = os.path.join(env, "Scripts", "python.exe") if os.name == "nt" else os.path.join(env, "bin", "python")
+        pip = [exe, "-m", "pip", "install", "-q", "--disable-pip-version-check"]
+
+        def fresh(wanted):
+            """A new virtualenv (with pip) and its requirements file."""
+            shutil.rmtree(env, ignore_errors=True)
+            sh(["uv", "venv", "-q", "--seed", "--python", python, env])
+            req_file = os.path.join(env, "qdebug-requirements.txt")
+            with open(req_file, "w", encoding="utf-8") as fh:
+                fh.write("\n".join(wanted) + "\n")
+            return req_file
+
+        def ok(cmd):
+            return sh(cmd, check=False).returncode == 0
+
+        def one_at_a_time(wanted):
+            """(requirements that do not install, {pin that installs only unpinned: its name})."""
+            fresh(wanted)
+            failed, relaxed = [], {}
+            for req in wanted:
+                if not ok(pip + [req]):
                     name = re.split(r"[=<>!~\[ ;]", req, maxsplit=1)[0]
-                    if sh(["uv", "pip", "install", "-q", "--python", env, name], check=False).returncode:
+                    if ok(pip + [name]):
+                        relaxed[req] = name
+                    else:
                         failed.append(req)
-            note = f"failed: {' '.join(failed)}" if failed else "some pins relaxed"
+            return failed, relaxed
+
+        note = "all requirements"
+        req_file = fresh(reqs)
+        if not ok(["uv", "pip", "install", "-q", "--python", env, "-r", req_file]):
+            # uv rejects some old archives that pip installs (Twisted 20.3.0's name is not PEP 625,
+            # protego 0.1.16 has a ':' in a file name), so pip gets the whole list next.
+            req_file = fresh(reqs)
+            if ok(pip + ["-r", req_file]):
+                note = "v3: all requirements, installed with pip"
+            else:
+                # A requirement that cannot install at all (pywin32 on Linux, the project itself) must
+                # not cost every other pin: installed one at a time, a later package may upgrade an
+                # earlier pin. So drop it, take the newest version of a pin that cannot install exactly,
+                # and install the rest together again.
+                failed, relaxed = one_at_a_time(reqs)
+                retry = [relaxed.get(r, r) for r in reqs if r not in failed]
+                if ok(pip + ["-r", fresh(retry)]):
+                    parts = ([f"dropped {' '.join(failed)}"] if failed else []) + (
+                        [f"newest {' '.join(relaxed.values())}"] if relaxed else [])
+                    note = f"v3: all requirements except: {'; '.join(parts)}"
+                else:  # a real conflict: keep the one-at-a-time result
+                    failed, relaxed = one_at_a_time(reqs)
+                    note = f"v3: one at a time; failed: {' '.join(failed)}; relaxed: {' '.join(relaxed)}"
         with open(done, "w", encoding="utf-8") as fh:
             fh.write(note)
         return env, f"{version[0]}.{version[1]}", note

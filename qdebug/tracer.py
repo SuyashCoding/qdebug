@@ -187,8 +187,9 @@ _STRUCTURED = {object.__repr__, list.__repr__, tuple.__repr__, dict.__repr__,
 
 
 def _is_ndarray(value):
-    cls = type(value)
-    return (cls.__module__.split(".")[0] == "numpy" and hasattr(value, "tobytes")
+    # __module__ can be None or missing: pydantic, for one, creates model classes without it
+    module = getattr(type(value), "__module__", None)
+    return (isinstance(module, str) and module.split(".")[0] == "numpy" and hasattr(value, "tobytes")
             and hasattr(value, "shape") and hasattr(value, "dtype"))
 
 
@@ -219,6 +220,9 @@ def safe_repr(value, limit=FULL_REPR_LIMIT):
         renderer.render(value, 0)
     except _Full:
         renderer.parts.append("...<truncated>")
+    except Exception as exc:  # noqa: BLE001 - this runs inside the trace function: an
+        # exception here would escape into the program being debugged and stop the tracing
+        renderer.parts.append(f"<unrepresentable {type(value).__name__}: {type(exc).__name__}>")
     text = _ADDRESS.sub(" at 0x?", "".join(renderer.parts))
     text = _THREAD_ID.sub(lambda m: m.group(1) + "?", text)
     for pattern, placeholder in _PATH_MASKS:
@@ -721,8 +725,12 @@ class TreeTracer(BaseTracer):
     def result(self):
         # Calls still open (e.g. tracing stopped by a crash) keep their state.
         for active in self.stack:
-            active.node["own_lines"] = sorted([f, n] for f, n in active.node["own_lines"])
             active.node["incomplete"] = True
+        for node in self.nodes:
+            # also a call whose return was never seen, if tracing stopped while it ran
+            if isinstance(node["own_lines"], set):
+                node["own_lines"] = sorted([f, n] for f, n in node["own_lines"])
+                node["incomplete"] = True
         return {"nodes": self.nodes}
 
 

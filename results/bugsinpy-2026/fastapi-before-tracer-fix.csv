@@ -1,0 +1,1178 @@
+project,bug,status,detail,python,test,buggy_functions,buggy_lines,patch_kind,suite_tests,strategy,reported_function,found_function,found_before_zoom,func_questions,line_questions,line_in_region,region_size,region_lines,zoom_status,final_tier,nodes_total,nodes_monitored,sbfl_func_rank,sbfl_line_rank,functions_total,stop_reason,seconds,basis,policy,noise,seed,dstar_func_rank,dstar_line_rank,crash_function,crash_found,failing_tests
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,infogain,fastapi/encoders.py::jsonable_encoder,1,1,4,0,0,,,none,5,15,14,1,8,269,confident,3.2,answers,baseline,0.0,0,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,topdown,tests/test_jsonable_encoder.py::test_encode_model_with_default,0,0,2,4,0,,,refuted_inputs,5,15,14,1,8,269,localized,3.7,answers,baseline,0.0,0,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,divide,tests/test_jsonable_encoder.py::test_encode_model_with_default,0,0,3,0,0,,,not_found,5,15,14,1,8,269,localized,0.3,answers,baseline,0.0,0,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,infogain,fastapi/encoders.py::jsonable_encoder,1,1,12,0,0,,,none,5,15,14,1,8,269,no informative question left,0.3,sbfl,tuned,0.0,0,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,topdown,fastapi/encoders.py::jsonable_encoder,1,0,5,0,0,,,none,5,15,14,1,8,269,localized,0.3,sbfl,tuned,0.0,0,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,divide,fastapi/encoders.py::jsonable_encoder,1,0,6,0,0,,,none,5,15,14,1,8,269,localized,0.3,sbfl,tuned,0.0,0,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,infogain,fastapi/encoders.py::jsonable_encoder,1,1,12,0,0,,,none,5,15,14,1,8,269,no informative question left,0.3,sbfl,tuned,0.1,0,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,infogain,fastapi/encoders.py::jsonable_encoder,1,1,12,0,0,,,none,5,15,14,1,8,269,no informative question left,0.3,sbfl,tuned,0.1,1,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,infogain,fastapi/encoders.py::jsonable_encoder,1,1,12,0,0,,,none,5,15,14,1,8,269,no informative question left,0.3,sbfl,tuned,0.1,2,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,infogain,fastapi/encoders.py::jsonable_encoder,1,1,12,0,0,,,none,5,15,14,1,8,269,no informative question left,0.3,sbfl,tuned,0.2,0,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,infogain,fastapi/encoders.py::jsonable_encoder,1,1,12,0,0,,,none,5,15,14,1,8,269,no informative question left,0.3,sbfl,tuned,0.2,1,1,8,,0,1
+fastapi,1,ok,,3.8,tests/test_jsonable_encoder.py::test_encode_model_with_default,fastapi/applications.py::FastAPI.add_api_route fastapi/applications.py::FastAPI.api_route fastapi/applications.py::FastAPI.api_route.<locals>.decorator fastapi/applications.py::FastAPI.delete fastapi/applications.py::FastAPI.get fastapi/applications.py::FastAPI.head fastapi/applications.py::FastAPI.options fastapi/applications.py::FastAPI.patch fastapi/applications.py::FastAPI.post fastapi/applications.py::FastAPI.put fastapi/applications.py::FastAPI.trace fastapi/encoders.py::jsonable_encoder fastapi/openapi/utils.py::get_openapi fastapi/openapi/utils.py::get_openapi_security_definitions fastapi/routing.py::APIRoute.__init__ fastapi/routing.py::APIRoute.get_route_handler fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.api_route fastapi/routing.py::APIRouter.api_route.<locals>.decorator fastapi/routing.py::APIRouter.delete fastapi/routing.py::APIRouter.get fastapi/routing.py::APIRouter.head fastapi/routing.py::APIRouter.include_router fastapi/routing.py::APIRouter.options fastapi/routing.py::APIRouter.patch fastapi/routing.py::APIRouter.post fastapi/routing.py::APIRouter.put fastapi/routing.py::APIRouter.trace fastapi/routing.py::_prepare_response_content fastapi/routing.py::get_request_handler,"fastapi/applications.py:173,174,199,200,224,225,252,253,311,312,336,337,361,362,386,387,411,412,436,437,461,462,486,487,511,512,536,537,561,562,586,587,611,612,636,637,661,662,686,687 fastapi/encoders.py:37,60,61,62,63,71,90,97,105,121,156 fastapi/openapi/utils.py:84,313 fastapi/routing.py:52,56,59,63,67,86,105,106,133,134,179,180,257,258,328,329,354,355,402,403,431,432,459,460,488,489,562,563,608,609,634,635,659,660,685,686,710,711,736,737,761,762,787,788,812,813,838,839,863,864,889,890,914,915,940,941,965,966,991,992",change+insert,12,infogain,fastapi/encoders.py::jsonable_encoder,1,1,12,0,0,,,none,5,15,14,1,8,269,no informative question left,0.3,sbfl,tuned,0.2,2,1,8,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,infogain,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,not_found,5,1,0,199,,267,confident,3.5,answers,baseline,0.0,0,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,topdown,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,not_found,5,1,0,199,,267,localized,0.3,answers,baseline,0.0,0,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,divide,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,not_found,5,1,0,199,,267,localized,0.3,answers,baseline,0.0,0,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,infogain,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,unconfirmed,0.2,no_project_code,tuned,0.0,0,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,topdown,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,localized,0.2,no_project_code,tuned,0.0,0,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,divide,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,localized,0.2,no_project_code,tuned,0.0,0,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,infogain,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,unconfirmed,0.2,no_project_code,tuned,0.1,0,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,infogain,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,unconfirmed,0.3,no_project_code,tuned,0.1,1,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,infogain,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,unconfirmed,0.3,no_project_code,tuned,0.1,2,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,infogain,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,unconfirmed,0.3,no_project_code,tuned,0.2,0,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,infogain,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,unconfirmed,0.3,no_project_code,tuned,0.2,1,199,,,0,1
+fastapi,2,ok,,3.8,tests/test_ws_router.py::test_router_ws_depends_with_override,fastapi/routing.py::APIRouter.add_api_websocket_route,fastapi/routing.py:501,change,6,infogain,tests/test_ws_router.py::test_router_ws_depends_with_override,0,0,0,0,0,,,none,5,1,0,199,,267,unconfirmed,0.2,no_project_code,tuned,0.2,2,199,,,0,1
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7244 (char 7243)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,infogain,,,,,,,,,,,,,,,,,4.1,,baseline,0.0,0,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7243 (char 7242)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,topdown,,,,,,,,,,,,,,,,,1.1,,baseline,0.0,0,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7244 (char 7243)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,divide,,,,,,,,,,,,,,,,,1.1,,baseline,0.0,0,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7243 (char 7242)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,infogain,,,,,,,,,,,,,,,,,1.2,,tuned,0.0,0,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7244 (char 7243)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,topdown,,,,,,,,,,,,,,,,,1.1,,tuned,0.0,0,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7244 (char 7243)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,divide,,,,,,,,,,,,,,,,,1.1,,tuned,0.0,0,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7243 (char 7242)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,0,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7244 (char 7243)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,1,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7244 (char 7243)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,2,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7244 (char 7243)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.2,0,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7244 (char 7243)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.2,1,,,,,
+fastapi,3,error,"/qdebug/qdebug/oracles.py"", line 269, in judge
+    return self._judge_call(question.node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 275, in _judge_call
+    fixed = self.fixed_tree().by_path.get(node.path)
+            ^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/oracles.py"", line 253, in fixed_tree
+    data = self.run(self.fixed_project, ""tree"", test=self.test_id, monitored=None,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 7243 (char 7242)
+",3.8,tests/test_serialize_response_model.py::test_valid,,"fastapi/routing.py:50,51,63,64,65,66,67,68,69",change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.2,2,,,,,
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,infogain,fastapi/openapi/utils.py::get_openapi_path,1,1,8,7,1,1,183,localized,10,152,151,10,159,247,certified,6.3,answers,baseline,0.0,0,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,topdown,fastapi/openapi/utils.py::get_openapi_path,1,1,10,7,1,1,183,localized,10,152,151,10,159,247,localized,0.3,answers,baseline,0.0,0,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,divide,fastapi/openapi/utils.py::get_openapi_path,1,1,6,7,1,1,183,localized,5,152,19,10,159,247,localized,0.3,answers,baseline,0.0,0,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,infogain,fastapi/openapi/utils.py::get_openapi_path,1,1,7,8,1,1,183,localized,10,152,151,10,159,247,certified,0.3,answers,tuned,0.0,0,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,topdown,fastapi/openapi/utils.py::get_openapi_path,1,1,10,8,1,1,183,localized,10,152,151,10,159,247,localized,0.3,answers,tuned,0.0,0,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,divide,fastapi/openapi/utils.py::get_openapi_path,1,1,6,8,1,1,183,localized,5,152,19,10,159,247,localized,0.2,answers,tuned,0.0,0,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,infogain,fastapi/openapi/utils.py::get_openapi_path,1,1,7,8,1,1,183,localized,10,152,151,10,159,247,certified,0.3,answers,tuned,0.1,0,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,infogain,fastapi/openapi/utils.py::get_openapi_path,1,1,7,12,0,1,230,localized,10,152,151,10,159,247,certified,0.3,answers,tuned,0.1,1,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,infogain,fastapi/openapi/utils.py::get_openapi_operation_parameters,0,1,3,6,0,1,110,localized,10,152,151,10,159,247,fan-out,1.8,answers,tuned,0.1,2,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,infogain,fastapi/openapi/utils.py::get_openapi_path,1,1,7,8,1,1,183,localized,10,152,151,10,159,247,certified,0.3,answers,tuned,0.2,0,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,infogain,fastapi/openapi/utils.py::get_openapi_path,1,1,7,12,0,1,230,localized,10,152,151,10,159,247,certified,0.3,answers,tuned,0.2,1,10,159,,0,1
+fastapi,4,ok,,3.8,tests/test_param_in_path_and_dependency.py::test_reused_param,fastapi/openapi/utils.py::get_openapi_path,fastapi/openapi/utils.py:183,change,2,infogain,fastapi/openapi/utils.py::get_openapi_operation_parameters,0,1,3,6,0,1,110,localized,10,152,151,10,159,247,fan-out,0.3,answers,tuned,0.2,2,10,159,,0,1
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11704 (char 11703)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,infogain,,,,,,,,,,,,,,,,,2.9,,baseline,0.0,0,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,topdown,,,,,,,,,,,,,,,,,1.1,,baseline,0.0,0,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,divide,,,,,,,,,,,,,,,,,1.1,,baseline,0.0,0,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.0,0,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,topdown,,,,,,,,,,,,,,,,,1.3,,tuned,0.0,0,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,divide,,,,,,,,,,,,,,,,,1.2,,tuned,0.0,0,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,0,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11704 (char 11703)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,1,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,2,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11704 (char 11703)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,infogain,,,,,,,,,,,,,,,,,1.2,,tuned,0.2,0,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,infogain,,,,,,,,,,,,,,,,,1.2,,tuned,0.2,1,,,,,
+fastapi,5,error,"bug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 11705 (char 11704)
+",3.8,tests/test_filter_pydantic_sub_model.py::test_filter_sub_model,fastapi/utils.py::create_cloned_field,fastapi/utils.py:100,change,,infogain,,,,,,,,,,,,,,,,,1.2,,tuned,0.2,2,,,,,
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,8,5,0,,,refuted_output,5,17,16,,56,246,no informative question left,9.5,answers,baseline,0.0,0,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,topdown,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,0,0,6,4,0,,,refuted_inputs,5,17,16,,56,246,localized,2.7,answers,baseline,0.0,0,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,divide,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,0,0,7,0,0,,,not_found,5,17,16,,56,246,localized,0.3,answers,baseline,0.0,0,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,8,0,0,,,none,5,17,16,,56,246,no informative question left,0.2,sbfl,tuned,0.0,0,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,topdown,fastapi/dependencies/utils.py::request_params_to_args,0,0,6,0,0,,,none,5,17,16,,56,246,localized,0.2,sbfl,tuned,0.0,0,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,divide,fastapi/dependencies/utils.py::request_params_to_args,0,0,7,0,0,,,none,5,17,16,,56,246,localized,0.3,sbfl,tuned,0.0,0,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,8,0,0,,,none,5,17,16,,56,246,no informative question left,0.2,sbfl,tuned,0.1,0,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,8,0,0,,,none,5,17,16,,56,246,no informative question left,0.2,sbfl,tuned,0.1,1,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,3,3,0,1,614,localized,5,17,16,,56,246,certified,0.3,answers,tuned,0.1,2,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,8,0,0,,,none,5,17,16,,56,246,no informative question left,0.2,sbfl,tuned,0.2,0,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,8,0,0,,,none,5,17,16,,56,246,no informative question left,0.2,sbfl,tuned,0.2,1,,56,,0,3
+fastapi,6,ok,,3.8,tests/test_forms_from_non_typing_sequences.py::test_python_list_param_as_form,,"fastapi/dependencies/utils.py:632,633,634",change,3,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,3,3,0,1,614,localized,5,17,16,,56,246,certified,0.3,answers,tuned,0.2,2,,56,,0,3
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,infogain,fastapi/exceptions.py::RequestValidationError.__init__,0,0,5,4,0,,,refuted_output,5,7,6,,3,226,no informative question left,11.5,answers,baseline,0.0,0,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,topdown,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,0,0,5,0,0,,,not_found,5,7,6,,3,226,localized,1.1,answers,baseline,0.0,0,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,divide,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,0,0,5,0,0,,,not_found,5,7,6,,3,226,localized,0.2,answers,baseline,0.0,0,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,infogain,fastapi/exceptions.py::RequestValidationError.__init__,0,0,5,0,0,,,none,5,7,6,,3,226,no informative question left,0.3,sbfl,tuned,0.0,0,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,topdown,fastapi/exceptions.py::RequestValidationError.__init__,0,0,5,0,0,,,none,5,7,6,,3,226,localized,0.3,sbfl,tuned,0.0,0,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,divide,fastapi/exceptions.py::RequestValidationError.__init__,0,0,5,0,0,,,none,5,7,6,,3,226,localized,0.3,sbfl,tuned,0.0,0,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,infogain,fastapi/exceptions.py::RequestValidationError.__init__,0,0,5,0,0,,,none,5,7,6,,3,226,no informative question left,0.2,sbfl,tuned,0.1,0,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,infogain,fastapi/exceptions.py::RequestValidationError.__init__,0,0,5,0,0,,,none,5,7,6,,3,226,no informative question left,0.2,sbfl,tuned,0.1,1,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,3,3,0,1,614,localized,5,7,6,,3,226,confident,0.2,answers,tuned,0.1,2,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,infogain,fastapi/exceptions.py::RequestValidationError.__init__,0,0,5,0,0,,,none,5,7,6,,3,226,no informative question left,0.2,sbfl,tuned,0.2,0,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,infogain,fastapi/exceptions.py::RequestValidationError.__init__,0,0,5,5,0,,,refuted_inputs,5,7,6,,3,226,no informative question left,0.3,sbfl,tuned,0.2,1,,3,,0,1
+fastapi,7,ok,,3.8,tests/test_multi_body_errors.py::test_jsonable_encoder_requiring_error,,"fastapi/exception_handlers.py:1,22",change,4,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,3,3,0,1,614,localized,5,7,6,,3,226,confident,0.3,answers,tuned,0.2,2,,3,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,infogain,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,not_found,5,1,0,156,,207,confident,4.1,answers,baseline,0.0,0,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,topdown,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,not_found,5,1,0,156,,207,localized,0.2,answers,baseline,0.0,0,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,divide,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,not_found,5,1,0,156,,207,localized,0.2,answers,baseline,0.0,0,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,infogain,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,unconfirmed,0.2,no_project_code,tuned,0.0,0,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,topdown,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,localized,0.2,no_project_code,tuned,0.0,0,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,divide,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,localized,0.2,no_project_code,tuned,0.0,0,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,infogain,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,unconfirmed,0.2,no_project_code,tuned,0.1,0,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,infogain,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,unconfirmed,0.2,no_project_code,tuned,0.1,1,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,infogain,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,unconfirmed,0.2,no_project_code,tuned,0.1,2,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,infogain,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,unconfirmed,0.2,no_project_code,tuned,0.2,0,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,infogain,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,unconfirmed,0.2,no_project_code,tuned,0.2,1,156,,,0,1
+fastapi,8,ok,,3.8,tests/test_custom_route_class.py::test_route_classes,fastapi/routing.py::APIRouter.add_api_route fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:352,489,490",change,5,infogain,tests/test_custom_route_class.py::test_route_classes,0,0,0,0,0,,,none,5,1,0,156,,207,unconfirmed,0.2,no_project_code,tuned,0.2,2,156,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,infogain,fastapi/openapi/utils.py::get_openapi,0,0,16,7,0,1,268,localized,10,271,270,119,,203,certified,6.3,answers,baseline,0.0,0,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,topdown,fastapi/openapi/utils.py::get_openapi,0,0,7,7,0,1,268,localized,10,271,270,119,,203,localized,0.2,answers,baseline,0.0,0,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,divide,fastapi/openapi/utils.py::get_openapi,0,0,17,7,0,1,268,localized,10,271,270,119,,203,localized,0.2,answers,baseline,0.0,0,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,infogain,fastapi/openapi/utils.py::get_openapi,0,0,15,7,0,1,268,localized,10,271,270,119,,203,certified,0.3,answers,tuned,0.0,0,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,topdown,fastapi/openapi/utils.py::get_openapi,0,0,7,7,0,1,268,localized,10,271,270,119,,203,localized,0.2,answers,tuned,0.0,0,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,divide,fastapi/openapi/utils.py::get_openapi,0,0,17,7,0,1,268,localized,10,271,270,119,,203,localized,0.2,answers,tuned,0.0,0,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,infogain,fastapi/openapi/utils.py::get_openapi,0,0,15,7,0,1,268,localized,10,271,270,119,,203,certified,0.2,answers,tuned,0.1,0,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,infogain,fastapi/openapi/utils.py::get_openapi,0,0,17,4,0,,,refuted_output,10,271,270,119,,203,certified,6.7,answers,tuned,0.1,1,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,infogain,fastapi/openapi/utils.py::get_openapi,0,0,17,12,0,1,268,localized,10,271,270,119,,203,certified,1.8,answers,tuned,0.1,2,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,infogain,fastapi/openapi/utils.py::get_openapi,0,0,15,7,0,1,268,localized,10,271,270,119,,203,certified,0.2,answers,tuned,0.2,0,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,infogain,fastapi/openapi/utils.py::get_openapi,0,0,17,4,0,,,refuted_output,10,271,270,119,,203,certified,0.2,answers,tuned,0.2,1,119,,,0,1
+fastapi,9,ok,,3.8,tests/test_request_body_parameters_media_type.py::test_openapi_schema,fastapi/dependencies/utils.py::get_body_field,"fastapi/dependencies/utils.py:561,562,568,569,577",change,1,infogain,fastapi/applications.py::FastAPI.openapi,0,0,19,9,0,1,73,localized,10,271,270,119,,203,no informative question left,1.9,answers,tuned,0.2,2,119,,,0,1
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,infogain,,,,,,,,,,,,,,,,,2.9,,baseline,0.0,0,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,topdown,,,,,,,,,,,,,,,,,1.3,,baseline,0.0,0,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,divide,,,,,,,,,,,,,,,,,1.1,,baseline,0.0,0,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.0,0,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,topdown,,,,,,,,,,,,,,,,,1.1,,tuned,0.0,0,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6235 (char 6234)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,divide,,,,,,,,,,,,,,,,,1.1,,tuned,0.0,0,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,0,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6235 (char 6234)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,1,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.1,2,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,infogain,,,,,,,,,,,,,,,,,1.1,,tuned,0.2,0,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6236 (char 6235)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,infogain,,,,,,,,,,,,,,,,,1.2,,tuned,0.2,1,,,,,
+fastapi,10,error,"debug/bugsinpy.py"", line 502, in evaluate_bug
+    session.run_session()
+  File ""/qdebug/qdebug/session.py"", line 662, in run_session
+    ranked = self.search()
+             ^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/session.py"", line 463, in search
+    self.build_tree()
+  File ""/qdebug/qdebug/session.py"", line 325, in build_tree
+    data = self.run(self.config.project, ""tree"", test=self.test_id, monitored=monitored,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/evaluate.py"", line 46, in __call__
+    self.cache[key] = self.run(project, mode, test=test, monitored=monitored,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/qdebug/qdebug/runner.py"", line 173, in invoke
+    data = json.load(fh)
+           ^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/usr/local/lib/python3.12/json/decoder.py"", line 356, in raw_decode
+    raise JSONDecodeError(""Expecting value"", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 6234 (char 6233)
+",3.8,tests/test_skip_defaults.py::test_return_defaults,fastapi/routing.py::serialize_response,"fastapi/routing.py:54,55",insert,,infogain,,,,,,,,,,,,,,,,,1.2,,tuned,0.2,2,,,,,
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,infogain,fastapi/applications.py::FastAPI.openapi,0,0,6,6,0,,,refuted_inputs,10,17,16,125,,203,no informative question left,11.8,answers,baseline,0.0,0,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,topdown,tests/test_union_body.py::test_item_openapi_schema,0,0,1,2,0,,,refuted_inputs,5,17,13,125,,203,localized,0.2,answers,baseline,0.0,0,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,divide,tests/test_union_body.py::test_item_openapi_schema,0,0,3,0,0,,,not_found,5,17,13,125,,203,localized,0.2,answers,baseline,0.0,0,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,infogain,fastapi/applications.py::FastAPI.openapi,0,0,6,0,0,,,none,10,17,16,125,,203,no informative question left,0.2,sbfl,tuned,0.0,0,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,topdown,fastapi/applications.py::FastAPI.openapi,0,0,1,0,0,,,none,5,17,13,125,,203,localized,0.2,sbfl,tuned,0.0,0,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,divide,fastapi/applications.py::FastAPI.openapi,0,0,3,0,0,,,none,5,17,13,125,,203,localized,0.2,sbfl,tuned,0.0,0,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,infogain,fastapi/applications.py::FastAPI.openapi,0,0,6,0,0,,,none,10,17,16,125,,203,no informative question left,0.2,sbfl,tuned,0.1,0,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,infogain,fastapi/applications.py::FastAPI.openapi,0,0,6,0,0,,,none,10,17,16,125,,203,no informative question left,0.2,sbfl,tuned,0.1,1,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,infogain,fastapi/applications.py::FastAPI.openapi,0,0,6,0,0,,,none,10,17,16,125,,203,no informative question left,0.2,sbfl,tuned,0.1,2,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,infogain,fastapi/applications.py::FastAPI.openapi,0,0,6,0,0,,,none,10,17,16,125,,203,no informative question left,0.2,sbfl,tuned,0.2,0,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,infogain,fastapi/applications.py::FastAPI.openapi,0,0,6,0,0,,,none,10,17,16,125,,203,no informative question left,0.2,sbfl,tuned,0.2,1,128,,,0,6
+fastapi,11,ok,,3.8,tests/test_union_body.py::test_item_openapi_schema,fastapi/dependencies/utils.py::is_scalar_field,"fastapi/dependencies/utils.py:134,139",change,6,infogain,fastapi/applications.py::FastAPI.openapi,0,0,6,0,0,,,none,10,17,16,125,,203,no informative question left,0.2,sbfl,tuned,0.2,2,128,,,0,6
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,infogain,fastapi/exceptions.py::HTTPException.__init__,0,0,6,5,0,,,refuted_output,5,8,7,,6,186,no informative question left,10.2,answers,baseline,0.0,0,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,topdown,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,0,0,6,2,0,,,refuted_inputs,5,8,7,,6,186,localized,1.2,answers,baseline,0.0,0,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,divide,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,0,0,6,0,0,,,not_found,5,8,7,,6,186,localized,0.2,answers,baseline,0.0,0,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,infogain,fastapi/exceptions.py::HTTPException.__init__,0,0,6,0,0,,,none,5,8,7,,6,186,no informative question left,0.2,sbfl,tuned,0.0,0,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,topdown,fastapi/exceptions.py::HTTPException.__init__,0,0,6,0,0,,,none,5,8,7,,6,186,localized,0.2,sbfl,tuned,0.0,0,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,divide,fastapi/exceptions.py::HTTPException.__init__,0,0,6,0,0,,,none,5,8,7,,6,186,localized,0.2,sbfl,tuned,0.0,0,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,infogain,fastapi/exceptions.py::HTTPException.__init__,0,0,6,0,0,,,none,5,8,7,,6,186,no informative question left,0.2,sbfl,tuned,0.1,0,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,infogain,fastapi/exceptions.py::HTTPException.__init__,0,0,6,0,0,,,none,5,8,7,,6,186,no informative question left,0.2,sbfl,tuned,0.1,1,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,3,3,0,1,376,localized,5,8,7,,6,186,confident,0.2,answers,tuned,0.1,2,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,infogain,fastapi/exceptions.py::HTTPException.__init__,0,0,6,0,0,,,none,5,8,7,,6,186,no informative question left,0.2,sbfl,tuned,0.2,0,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,infogain,fastapi/exceptions.py::HTTPException.__init__,0,0,6,0,0,,,none,5,8,7,,6,186,no informative question left,0.2,sbfl,tuned,0.2,1,,6,,0,1
+fastapi,12,ok,,3.8,tests/test_security_http_bearer_optional.py::test_security_http_bearer_incorrect_scheme_credentials,,"fastapi/security/http.py:115,116,117,118",change,4,infogain,fastapi/dependencies/utils.py::request_params_to_args,0,0,3,3,0,1,376,localized,5,8,7,,6,186,confident,0.2,answers,tuned,0.2,2,,6,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,infogain,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,not_found,5,1,0,107,,139,confident,3.9,answers,baseline,0.0,0,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,topdown,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,not_found,5,1,0,107,,139,localized,0.1,answers,baseline,0.0,0,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,divide,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,not_found,5,1,0,107,,139,localized,0.1,answers,baseline,0.0,0,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,infogain,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,unconfirmed,0.1,no_project_code,tuned,0.0,0,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,topdown,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,localized,0.1,no_project_code,tuned,0.0,0,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,divide,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,localized,0.1,no_project_code,tuned,0.0,0,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,infogain,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,unconfirmed,0.1,no_project_code,tuned,0.1,0,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,infogain,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,unconfirmed,0.1,no_project_code,tuned,0.1,1,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,infogain,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,unconfirmed,0.1,no_project_code,tuned,0.1,2,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,infogain,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,unconfirmed,0.1,no_project_code,tuned,0.2,0,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,infogain,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,unconfirmed,0.1,no_project_code,tuned,0.2,1,107,,,0,1
+fastapi,13,ok,,3.8,tests/test_additional_responses_router.py::test_openapi_schema,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:290,291,292,302",change,4,infogain,tests/test_additional_responses_router.py::test_openapi_schema,0,0,0,0,0,,,none,5,1,0,107,,139,unconfirmed,0.1,no_project_code,tuned,0.2,2,107,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,infogain,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,not_found,5,1,0,,,138,confident,3.7,answers,baseline,0.0,0,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,topdown,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,not_found,5,1,0,,,138,localized,0.1,answers,baseline,0.0,0,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,divide,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,not_found,5,1,0,,,138,localized,0.1,answers,baseline,0.0,0,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,infogain,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,unconfirmed,0.1,no_project_code,tuned,0.0,0,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,topdown,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,localized,0.1,no_project_code,tuned,0.0,0,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,divide,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,localized,0.1,no_project_code,tuned,0.0,0,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,infogain,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,unconfirmed,0.1,no_project_code,tuned,0.1,0,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,infogain,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,unconfirmed,0.1,no_project_code,tuned,0.1,1,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,infogain,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,unconfirmed,0.1,no_project_code,tuned,0.1,2,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,infogain,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,unconfirmed,0.1,no_project_code,tuned,0.2,0,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,infogain,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,unconfirmed,0.1,no_project_code,tuned,0.2,1,,,,0,1
+fastapi,14,ok,,3.8,tests/test_additional_properties.py::test_additional_properties_schema,,"fastapi/openapi/models.py:102,123,223",change,2,infogain,tests/test_additional_properties.py::test_additional_properties_schema,0,0,0,0,0,,,none,5,1,0,,,138,unconfirmed,0.1,no_project_code,tuned,0.2,2,,,,0,1
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,infogain,tests/test_ws_router.py::test_router,0,0,0,0,0,,,not_found,5,1,0,103,,135,confident,3.9,answers,baseline,0.0,0,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,topdown,tests/test_ws_router.py::test_router,0,0,0,0,0,,,not_found,5,1,0,103,,135,localized,0.1,answers,baseline,0.0,0,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,divide,tests/test_ws_router.py::test_router,0,0,0,0,0,,,not_found,5,1,0,103,,135,localized,0.1,answers,baseline,0.0,0,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,infogain,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,unconfirmed,0.1,no_project_code,tuned,0.0,0,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,topdown,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,localized,0.1,no_project_code,tuned,0.0,0,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,divide,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,localized,0.1,no_project_code,tuned,0.0,0,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,infogain,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,unconfirmed,0.1,no_project_code,tuned,0.1,0,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,infogain,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,unconfirmed,0.1,no_project_code,tuned,0.1,1,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,infogain,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,unconfirmed,0.1,no_project_code,tuned,0.1,2,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,infogain,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,unconfirmed,0.1,no_project_code,tuned,0.2,0,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,infogain,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,unconfirmed,0.1,no_project_code,tuned,0.2,1,103,,,0,2
+fastapi,15,ok,,3.8,tests/test_ws_router.py::test_router,fastapi/routing.py::APIRouter.include_router,"fastapi/routing.py:273,274",insert,3,infogain,tests/test_ws_router.py::test_router,0,0,0,0,0,,,none,5,1,0,103,,135,unconfirmed,0.1,no_project_code,tuned,0.2,2,103,,,0,2
+fastapi,16,no trace,test module does not import on the buggy version: E   ImportError: cannot import name 'Self' from 'typing_extensions' (/work/w/envs/fastapi-py38-3068500b2a/lib/python3.8/site-packages/typing_extensions.py),3.8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

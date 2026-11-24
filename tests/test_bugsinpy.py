@@ -1,5 +1,7 @@
 """The BugsInPy harness's pure parts, and the session behaviour it relies on."""
 
+import os
+
 import pytest
 
 from qdebug.bugsinpy import (
@@ -10,6 +12,7 @@ from qdebug.bugsinpy import (
     requirements,
     select_bugs,
     unittest_to_nodeid,
+    write_scm_version,
 )
 from qdebug.session import DebugSession, SessionConfig, SessionError
 from qdebug.spectrum import scan_functions
@@ -72,6 +75,10 @@ def test_unittest_ids_and_run_test_commands(tmp_path):
     assert parse_tests(text, str(tmp_path)) == [
         "test/test_utils.py::TestUtil::test_a", "tests/test_b.py::test_b",
         "tests/test_c.py::TestC::test_c", "tests/test_d.py::test_d"]
+    # scrapy bug 1 names a private helper of the test class first: it is skipped
+    helper = ("python -m unittest -q test.test_utils.TestUtil._get_args\n"
+              "python -m unittest -q test.test_utils.TestUtil.test_a\n")
+    assert parse_tests(helper, str(tmp_path)) == ["test/test_utils.py::TestUtil::test_a"]
 
 
 def test_requirements(tmp_path):
@@ -152,3 +159,80 @@ def test_requirements_written_as_utf16_are_read(tmp_path):
     reqs = requirements(str(tmp_path), "black")
     assert reqs[:2] == ["aiohttp==3.6.2", "attrs==19.3.0"]  # the project's own package is left out
     assert all("\x00" not in r for r in reqs)
+
+
+def test_setuptools_scm_version_file_is_written(tmp_path):
+    # black's later commits import _black_version, which only exists after a pip install
+    (tmp_path / "setup.py").write_text(
+        'setup(use_scm_version={\n    "write_to": "_black_version.py",\n})\n', encoding="utf-8")
+    write_scm_version(str(tmp_path))
+    namespace = {}
+    exec((tmp_path / "_black_version.py").read_text(encoding="utf-8"), namespace)
+    assert namespace["version"] == "0.0.0"
+    (tmp_path / "_black_version.py").write_text('version = "kept"\n', encoding="utf-8")
+    write_scm_version(str(tmp_path))  # an existing file is left alone
+    assert "kept" in (tmp_path / "_black_version.py").read_text(encoding="utf-8")
+
+
+def test_a_failed_run_is_remembered():
+    # a whole-suite run that times out must cost the timeout once per bug, not once per session
+    from qdebug.evaluate import RunCache
+
+    calls = []
+
+    def run(project, mode, **kw):
+        calls.append(mode)
+        raise TimeoutError("timed out after 600 seconds")
+
+    cache = RunCache(run=run)
+    for _ in range(3):
+        with pytest.raises(TimeoutError):
+            cache("proj", "spectrum")
+    assert calls == ["spectrum"]
+
+
+def test_one_uninstallable_requirement_does_not_relax_the_other_pins(tmp_path, monkeypatch):
+    # luigi, sanic, scrapy and tornado list pywin32 (or the stdlib's unittest), which cannot install on
+    # Linux; installing the rest one at a time let a later package upgrade Twisted past its pin. And uv
+    # rejects some old archives pip installs (Twisted 20.3.0, protego 0.1.16).
+    import types
+
+    import qdebug.bugsinpy as b
+
+    bug_dir = tmp_path / "BugsInPy" / "projects" / "scrapy" / "bugs" / "1"
+    bug_dir.mkdir(parents=True)
+    (bug_dir / "requirements.txt").write_text("Twisted==20.3.0\npywin32==227\nlxml==4.5.0\nprotego==0.1.16\n")
+    batches = []
+
+    def fake_sh(cmd, cwd=None, timeout=1800, check=True):
+        if cmd[:2] == ["uv", "venv"]:
+            os.makedirs(cmd[-1], exist_ok=True)
+            return types.SimpleNamespace(returncode=0)
+        uv = cmd[0] == "uv"
+
+        def bad(req):  # pywin32 never installs; uv also refuses the old Twisted and protego archives
+            return "pywin32" in req or (uv and req in ("Twisted==20.3.0", "protego==0.1.16"))
+        if "-r" in cmd:
+            wanted = open(cmd[cmd.index("-r") + 1]).read().split()
+            batches.append(("uv" if uv else "pip", wanted))
+            return types.SimpleNamespace(returncode=1 if any(bad(r) for r in wanted) else 0)
+        return types.SimpleNamespace(returncode=1 if bad(cmd[-1]) else 0)
+
+    monkeypatch.setattr(b, "sh", fake_sh)
+    ws = types.SimpleNamespace(work=str(tmp_path / "work"), bug_dir=lambda project, bug: str(bug_dir))
+    envs = b.Environments(ws, log=lambda *a: None)
+    monkeypatch.setattr(envs, "interpreter", lambda version: "python3.8")
+    env, version, note = envs.get("scrapy", "1", {"python_version": "3.8"})
+    tool, last = batches[-1]
+    # everything but pywin32 installed together by pip, with every pin
+    assert tool == "pip" and "pywin32==227" not in last
+    assert {"Twisted==20.3.0", "lxml==4.5.0", "protego==0.1.16"} <= set(last)
+    assert note == "v3: all requirements except: dropped pywin32==227"
+    # an environment from the older fallback is built again; a plain pinned one is kept
+    for old, rebuilt in (("failed: pywin32==227", True), ("all requirements except: newest Twisted", True),
+                         ("all requirements", False)):
+        with open(os.path.join(env, ".qdebug-ready"), "w") as fh:
+            fh.write(old)
+        batches.clear()
+        envs.get("scrapy", "1", {"python_version": "3.8"})
+        assert bool(batches) == rebuilt, old
