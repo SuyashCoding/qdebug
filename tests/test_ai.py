@@ -425,16 +425,18 @@ def test_eval_ai_grades_claude_against_the_ground_truth(monkeypatch, tmp_path, m
     from qdebug.ai import benchmark
 
     def oracle(self, kind, human=None, threshold=0.8, show=None):
-        truth = human if human is not None else GroundTruthOracleFor.current
+        truth = human if human is not None else GroundTruthOracleFor.made.current
         sim = SimulatedClaude(truth)
         return HybridOracle(sim, human, threshold) if kind == "hybrid" else sim
 
     class GroundTruthOracleFor(benchmark.GroundTruthOracle):
-        current = None
+        # one per thread: the two bugs run in parallel, and each bug's simulated Claude must judge
+        # against its own bug's ground truth (a shared attribute let one bug take the other's)
+        made = threading.local()
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            GroundTruthOracleFor.current = self
+            GroundTruthOracleFor.made.current = self
 
     monkeypatch.setattr(benchmark, "GroundTruthOracle", GroundTruthOracleFor)
     monkeypatch.setattr(Assistant, "oracle", oracle)
