@@ -15,6 +15,11 @@ exact line that is wrong.
 It works with Python projects tested with [pytest](https://docs.pytest.org/), the most common Python test
 tool.
 
+**It can also use AI.** With an Anthropic API key, qdebug can hand the questions to **Claude**: Claude can
+answer all of them while you watch, answer only the ones it is sure about and ask you the rest, or just take
+a first look at the failure and explain the bug with a suggested fix at the end. This is optional: everything
+else in this README works without an API key. See [Optional: let Claude help](#7-optional-let-claude-help).
+
 | | Section | What's in it |
 |---|---|---|
 | 1 | [How it works](#1-how-it-works) | The idea in five steps. |
@@ -23,7 +28,7 @@ tool.
 | 4 | [A harder one: youtube-dl](#4-a-harder-one-youtube-dl) | A real bug buried 7 calls deep in a 100,000-line project. |
 | 5 | [Install qdebug on your computer](#5-install-qdebug-on-your-computer) | Windows, macOS and Linux, without Docker. |
 | 6 | [Use it on your own project](#6-use-it-on-your-own-project) | Your own code, or any project from GitHub. |
-| 7 | [Optional: let Claude help](#7-optional-let-claude-help) | An AI that answers the questions for you. |
+| 7 | [Optional: let Claude help](#7-optional-let-claude-help) | Use the Claude API so an AI answers the questions and explains the bug. |
 | 8 | [Reproduce the results](#8-reproduce-the-results) | The tests, the benchmarks and the real-bug study. |
 | 9 | [What's in this repository](#9-whats-in-this-repository) | Every command and every folder. |
 | | [Troubleshooting](#troubleshooting) | If something doesn't work. |
