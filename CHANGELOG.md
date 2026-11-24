@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **The real-bug study.** qdebug was run on 229 BugsInPy bugs following a plan written before the run
+  (`docs/EVALUATION_PLAN.md`). On the 105 completed bugs of six held-out projects it named the buggy function
+  for 47% against 22% for Ochiai's top entry (p < 0.001); tables in `results/bugsinpy-2026/study.md`. The
+  study's tooling: `qdebug bugsinpy --policies --noise --seeds`, `qdebug study-report`, and
+  `benchmarks/bugsinpy.Dockerfile`, which keeps the downloaded projects inside a container.
+- Fixed: a value whose class has no `__module__` (pydantic creates such classes) made the tracer raise and
+  stop recording.
+- A second demo, a wrong-value bug 7 calls deep in youtube-dl (`examples/youtube-dl`), with its own
+  Dockerfile; CI replays its answers too.
+- `docs/EXPLAINED.md` explains qdebug and its evaluation in plain English, and `docs/paper/` holds the paper.
+
 - **Several failing tests, several bugs.** qdebug groups the failing tests by the bug that probably causes
   them (same crash location, or a rarely-passed line they all run) and shows the groups when you pick a test.
   The session ranks code against the chosen test's group only, so another bug's failures don't dilute it, and

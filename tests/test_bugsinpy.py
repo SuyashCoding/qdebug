@@ -213,7 +213,8 @@ def test_one_uninstallable_requirement_does_not_relax_the_other_pins(tmp_path, m
         def bad(req):  # pywin32 never installs; uv also refuses the old Twisted and protego archives
             return "pywin32" in req or (uv and req in ("Twisted==20.3.0", "protego==0.1.16"))
         if "-r" in cmd:
-            wanted = open(cmd[cmd.index("-r") + 1]).read().split()
+            with open(cmd[cmd.index("-r") + 1]) as fh:
+                wanted = fh.read().split()
             batches.append(("uv" if uv else "pip", wanted))
             return types.SimpleNamespace(returncode=1 if any(bad(r) for r in wanted) else 0)
         return types.SimpleNamespace(returncode=1 if bad(cmd[-1]) else 0)

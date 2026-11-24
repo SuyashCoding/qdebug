@@ -68,6 +68,11 @@ jobs:
         run: |
           printf 'n\nn\ny\nn\nn\nn\ny\n' | docker run -i --rm qdebug > demo.txt 2>&1 || true
           grep -q "tqdm/_tqdm.py, line 322" demo.txt || { cat demo.txt; exit 1; }
+      - name: The youtube-dl demo, answered the way the README says, lands on line 2348
+        run: |
+          docker build -t qdebug-youtube-dl -f examples/youtube-dl/Dockerfile .
+          printf 'n\nn\nn\nn\nn\nn\nn\nn\ny\nn\ny\ny\nn\n' | docker run -i --rm qdebug-youtube-dl > ytdl.txt 2>&1 || true
+          grep -q "youtube_dl/utils.py, line 2348" ytdl.txt || { cat ytdl.txt; exit 1; }
 
   package:
     needs: lint

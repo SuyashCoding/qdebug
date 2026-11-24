@@ -247,12 +247,16 @@ ground-truth oracle's old answer for calls missing from the fixed run) gives the
 all 420, and the same question counts in 414; in the other 6, all under noise, one line question became a
 call question.
 
-**Real bugs (BugsInPy).** On 80 real bugs from six projects (PySnooper, thefuck, tqdm, youtube-dl, httpie,
-cookiecutter), version 0.1 found the buggy function for 50 and the line for 31, against 46 and 18 for the top
-entry of an Ochiai ranking — about as good as reading the ranking's top three, not clearly better. It found
-none of the 12 bugs whose failing test makes 100 calls or more. Details are in
-[results/bugsinpy/summary.md](../results/bugsinpy/summary.md); this study has not been re-run with the current
-search.
+**Real bugs (BugsInPy).** The current version was run on 229 real bugs following a plan written before the
+run ([EVALUATION_PLAN.md](EVALUATION_PLAN.md)). On the 105 completed bugs of six projects never used during
+development (black, fastapi, luigi, sanic, tornado, scrapy), qdebug found the buggy function for 49 (47%) and
+the line for 37 (35%), against 23 and 13 for the top entry of an Ochiai ranking (McNemar p < 0.001), about
+as many as Ochiai's top three. The tuned policy found as many bugs as the baseline with 10.7 instead of 13.4
+questions, and on failing tests with 100+ calls qdebug still found 47% while Ochiai's top entry fell to 13%.
+On the six development projects it found 78% against 59%. Every table:
+[results/bugsinpy-2026/study.md](../results/bugsinpy-2026/study.md). (Version 0.1, on 80 of the development
+bugs, had been about as good as Ochiai's top three and found none of the 12 bugs with 100+ calls:
+[results/bugsinpy/summary.md](../results/bugsinpy/summary.md).)
 
 ### Two bugs at once
 
@@ -383,8 +387,9 @@ pytest                  # with the end-to-end runs on seeded bugs, about 3 min
 * **Not every bug lives on a line that runs.** A wrong default argument sits on the `def` line, a wrong
   module-level constant outside any call, a lambda or generator body inside its caller. qdebug then names
   the function that uses it, not the line.
-* **Large failing runs.** On real projects qdebug is about as good as reading the top few entries of a
-  suspiciousness ranking; a failing test with hundreds of calls can use up the question budget.
+* **Half of real bugs are still missed.** On held-out real projects qdebug's one answer is about as good as
+  reading the top three entries of a suspiciousness ranking, and much worse on code that works through
+  asynchronous callbacks (tornado, fastapi).
 * **Value judgments by rendering.** Objects whose `repr` hides state, or changes between runs, cannot be judged
   reliably.
 * **Claude was measured on seeded bugs only, through the relay, once.** The Haiku numbers come from

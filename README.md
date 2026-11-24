@@ -1,34 +1,137 @@
 # qdebug
 
-**qdebug helps you find the bug behind a failing test, by asking you simple yes/no questions.**
+**qdebug finds the bug behind a failing test by asking you simple yes/no questions.**
 
-When a test fails, you usually have to read a lot of code to work out where the mistake is. qdebug does the
-searching for you. It runs the tests, then shows you one function call at a time (what went in, what came
-out) and asks *"Is that the right result?"*. You answer **y** (yes) or **n** (no). Each answer rules out a
-big part of the program, and after a handful of questions qdebug points at the exact line that is wrong.
+When a test fails, it tells you the final answer was wrong, not *where* the mistake is. Finding that usually
+means reading a lot of code. qdebug does the searching instead. It runs the failing test, records every
+function call (what went in, what came out), and shows you one call at a time:
 
-It works with Python projects that test with [pytest](https://docs.pytest.org/).
+> `apply_discount` was called with `price = 100, percent = 10` and returned `110`. **Is that the right result?**
 
-| | Section | What it's for |
+You answer **y** or **n**. You don't have to read any code, only know what the function is supposed to
+do. Each answer rules out a big part of the program, and after a handful of questions qdebug points at the
+exact line that is wrong.
+
+It works with Python projects tested with [pytest](https://docs.pytest.org/), the most common Python test
+tool.
+
+**New to all this?** Read [**qdebug, explained simply**](docs/EXPLAINED.md) first: what it does, how it
+was tested and what came out, in plain English. The short research paper is
+[docs/paper/qdebug-paper.docx](docs/paper/qdebug-paper.docx).
+
+| | Section | What's in it |
 |---|---|---|
-| 1 | [Try the demo in Docker](#1-try-the-demo-in-docker) | **Start here.** Find a real bug in a real library. You only need Docker. |
-| 2 | [Install qdebug on your computer](#2-install-qdebug-on-your-computer) | Windows, macOS and Linux, to use qdebug without Docker. |
-| 3 | [Use qdebug on your own project](#3-use-qdebug-on-your-own-project) | Your own code, or any public project from GitHub. |
-| 4 | [Optional: let Claude help](#4-optional-let-claude-help) | An AI that can answer the questions for you. Not needed. |
+| 1 | [How it works](#1-how-it-works) | The idea in five steps. |
+| 2 | [Does it work?](#2-does-it-work) | Results on 229 real bugs, compared with existing techniques. |
+| 3 | [Try it: a real bug in tqdm](#3-try-it-a-real-bug-in-tqdm) | **Start here.** A 10-minute demo. You only need Docker. |
+| 4 | [A harder one: youtube-dl](#4-a-harder-one-youtube-dl) | A real bug buried 7 calls deep in a 100,000-line project. |
+| 5 | [Install qdebug on your computer](#5-install-qdebug-on-your-computer) | Windows, macOS and Linux, without Docker. |
+| 6 | [Use it on your own project](#6-use-it-on-your-own-project) | Your own code, or any project from GitHub. |
+| 7 | [Optional: let Claude help](#7-optional-let-claude-help) | An AI that answers the questions for you. |
+| 8 | [Reproduce the results](#8-reproduce-the-results) | The tests, the benchmarks and the real-bug study. |
+| 9 | [What's in this repository](#9-whats-in-this-repository) | Every command and every folder. |
 | | [Troubleshooting](#troubleshooting) | If something doesn't work. |
 
 ---
 
-## 1. Try the demo in Docker
+## 1. How it works
 
-Docker runs programs inside a *container*: a small, ready-made Linux computer. The qdebug container has
-Python, qdebug and a buggy copy of a real library already inside, so it works the same on Windows, macOS
-and Linux, and you don't have to install Python.
+qdebug combines two older ideas from debugging research and fixes the main weakness of each.
+
+1. **Make a first guess.** qdebug runs all the tests and notes which code each one runs. Code that the
+   failing tests run a lot and the passing tests rarely run is *suspicious*. This is called spectrum-based
+   fault localization; qdebug uses the common **Ochiai** formula. Many tools stop here and give you a ranked
+   list, but the real bug is often not near the top, and people don't read long lists.
+2. **Record the failing test.** It reruns the failing test and records every call as a tree: who called
+   whom, with what inputs, and what came back. To stay fast it records full values for only the most
+   suspicious 5% of functions first, and more only if it needs them.
+3. **Ask the most useful question.** This is *algorithmic debugging* (Shapiro, 1983): if a call's result is
+   wrong but every call it made gave a right result, the bug is in that function. Classic versions ask in a
+   fixed order; qdebug starts from the guess in step 1 and always asks the question expected to rule out the
+   most (the highest *information gain*).
+4. **Don't trust any single answer.** People make mistakes, and one wrong answer sends a classic algorithmic
+   debugger the wrong way for good. qdebug keeps a probability for every call and treats each answer as
+   evidence that is wrong 10% of the time, so later answers can outvote a mistake. It stops when one function
+   holds 90% of the probability, or when a call is proven wrong with all its sub-calls right.
+5. **Find the line.** It replays the broken function and shows you the variables before different lines,
+   asking "still on the right track here?". The line where things go from right to wrong is the bug.
+
+Two more things it does: if several tests fail, it **groups them by the bug that probably causes each
+group**, so a second bug doesn't throw off the first guess. And a few **search rules learned from failures**
+on practice bugs (the *tuned* policy, the default) cut the number of questions; `--policy baseline` turns
+them off. Full details: [docs/DETAILS.md](docs/DETAILS.md).
+
+---
+
+## 2. Does it work?
+
+We tested qdebug on **real bugs from real open-source projects**, using
+[BugsInPy](https://github.com/soarsmu/BugsInPy), a collection that research papers use to measure debugging
+tools: each bug comes with the code before and after the developers fixed it, and the test that shows it.
+
+**How the test was set up**
+
+- **A robot answers the questions.** Nobody can answer thousands of questions by hand, so an *oracle*
+  answers each one by running the same call in the fixed version of the project and checking whether the
+  output matches. It stands in for a careful person. To see what happens when people make mistakes, it was
+  also made to answer wrong on purpose 10% and 20% of the time.
+- **Held-out projects.** Six projects qdebug had already been tried on (96 bugs) are the *development* set.
+  Six projects it had **never** been run on (black, fastapi, luigi, sanic, tornado, scrapy; 133 bugs) are
+  the *held-out* set, run once with the code frozen. The conclusions rest on the held-out set.
+- **Plan written first.** What to measure, what to compare against, which statistical tests to use and what
+  counts as success were all written down **before** the run: [docs/EVALUATION_PLAN.md](docs/EVALUATION_PLAN.md).
+  Every change made during the run is listed there under *Deviations*.
+- **Compared with:** the top 1, 3 and 5 entries of the Ochiai and DStar rankings (what fault-localization
+  tools give you), the place where the program crashed (what a stack trace gives you), and the classic
+  top-down and divide-and-query question orders. Comparisons are on the same bugs, with McNemar's exact test
+  and the Wilcoxon signed-rank test.
+- **Success meant:** qdebug finds the buggy function more often than Ochiai's top entry on the held-out
+  set (p < 0.05), and the tuned rules are no worse than the baseline.
+
+**Results on the held-out projects** (105 bugs with a completed session; 23 more could not be reproduced on
+a current machine and 5 failed for other reasons, all reported):
+
+| technique | finds the buggy function | finds the buggy line |
+|---|---|---|
+| **qdebug** (one answer, about 11 questions) | **49 (47%)** | **37 (35%)** |
+| Ochiai, top entry | 23 (22%) | 13 (12%) |
+| Ochiai, top 3 | 41 (39%) | 29 (28%) |
+| Ochiai, top 5 | 54 (51%) | 36 (34%) |
+| DStar, top entry | 23 (22%) | 13 (12%) |
+| crash location (only for the 20 crashes) | 11 of 20 | – |
+
+- **The success criterion was met.** qdebug names the buggy function twice as often as Ochiai's top entry
+  (28 bugs found only by qdebug, 2 only by Ochiai; p < 0.001), and the line almost three times as often.
+  Its single answer is about as good as reading the top three of the ranking.
+- **Tuned vs baseline rules:** the same bugs found (49 vs 50, p = 1.0), with fewer questions (10.7 vs 13.4
+  on average, p < 0.001).
+- **Wrong answers:** with 10% of answers wrong it still finds 39% of the buggy functions, and 35% with 20%
+  wrong. Lines suffer more (24% and 16%).
+- **Big runs:** on failing tests with 100 or more calls it still finds 47%, while Ochiai's top entry drops
+  to 13%. That's where asking questions helps most.
+- **Where it struggles:** about half the bugs are still missed; tornado (3 of 14) and fastapi (4 of 15),
+  which do much of their work in asynchronous code, were the hardest.
+- On the development projects, qdebug found 78% against 59% for Ochiai's top entry.
+
+Every table (per research question and per project): [results/bugsinpy-2026/study.md](results/bugsinpy-2026/study.md).
+On the 39 bugs we planted in two practice projects, qdebug finds all 39 functions and 34 exact lines, and
+so does it with **Claude Haiku** answering instead of the robot ([details](docs/DETAILS.md#results)).
+
+**Limits to keep in mind:** the robot never gets confused the way people do (a user study is planned in
+[docs/USER_STUDY.md](docs/USER_STUDY.md)); old projects needed some library versions swapped for ones
+that still install; and qdebug looks for one bug at a time in a test that behaves the same on every run.
+
+---
+
+## 3. Try it: a real bug in tqdm
+
+You'll find a real bug in a real library in about 10 minutes, using Docker. Docker runs programs inside a
+*container*, a small ready-made Linux computer, so this works the same on Windows, macOS and Linux and you
+don't need to install Python.
 
 ### The bug you'll find
 
-[**tqdm**](https://github.com/tqdm/tqdm) (from *taqaddum*, Arabic for "progress") is a Python library that
-adds a **progress bar** to any loop. You wrap the thing you loop over in `tqdm(...)`:
+[**tqdm**](https://github.com/tqdm/tqdm) is a Python library that adds a **progress bar** to any loop:
 
 ```python
 from tqdm import tqdm
@@ -37,31 +140,17 @@ for file in tqdm(files_to_download):
     download(file)
 ```
 
-and while the loop runs, the terminal shows how far along it is, how fast it's going and how long is left:
-
 ```text
  76%|███████████████▏    | 763/1000 [00:02<00:00, 380.12it/s]
 ```
 
-It's one of the most downloaded packages on [PyPI](https://pypi.org/project/tqdm/), Python's package store.
-If you've ever installed a machine-learning model or dataset in Python and watched a bar fill up, that was
-probably tqdm.
-
-**Why this counts as a real program:**
-
-- **Nobody wrote it for this demo.** It's tqdm's own code, written over years by its developers and many
-  outside contributors, for real users: 10 source files, about 2,600 lines, with classes, background
-  threads and locks. qdebug has to search through 109 functions.
-- **The bug really happened.** In 2019, tqdm crashed when you used `unit_scale` on a loop whose length it
-  couldn't know. tqdm's developers
-  [fixed it in public](https://github.com/tqdm/tqdm/commit/964dee631d0ed30e2f799b42fc58ba5e73795a08), and
-  the failing test you'll see is the one *they* wrote for it.
-- **Researchers use it to test debugging tools.** This exact bug is "tqdm bug 4" in
-  [BugsInPy](https://github.com/soarsmu/BugsInPy), a collection of real bugs from 17 real Python projects
-  that research papers use to measure debugging tools.
-
-The folder `examples/tqdm` holds tqdm's code exactly as it was **before** the fix
-([what's in it, and the few small files added so its 2019 tests run on today's Python](examples/tqdm/QDEBUG_DEMO.md)).
+It's one of the most downloaded Python packages. In 2019 it crashed when you used `unit_scale` on a loop
+whose length it couldn't know. tqdm's developers
+[fixed it](https://github.com/tqdm/tqdm/commit/964dee631d0ed30e2f799b42fc58ba5e73795a08), and the failing
+test you'll see is the one *they* wrote. It is "tqdm bug 4" in BugsInPy. The code is tqdm's own (10 files,
+about 2,600 lines, 109 functions), exactly as it was before the fix: see
+[examples/tqdm/QDEBUG_DEMO.md](examples/tqdm/QDEBUG_DEMO.md) for the few small files added so its 2019 tests
+run on today's Python.
 
 ### Step 1: Install Docker Desktop
 
@@ -75,7 +164,7 @@ corner says **Engine running**. You don't need to sign in.
 - **macOS:** press Cmd+Space, type `Terminal`, press Enter.
 - **Linux:** open your terminal app.
 
-Type each command below into it and press Enter after each one.
+Type each command below and press Enter after each one.
 
 ### Step 3: Download qdebug
 
@@ -97,8 +186,7 @@ if a window offers to install the *command line developer tools*, accept: that i
 docker build -t qdebug .
 ```
 
-The `.` at the end matters: it means "this folder". This takes a minute or two the first time, and you only
-need to do it once.
+The `.` at the end matters: it means "this folder". It takes a minute or two the first time.
 
 ### Step 5: Start the demo
 
@@ -128,17 +216,15 @@ def test_nototal():
         assert "100it" in our_file.getvalue()
 ```
 
-It loops over 10 items with a progress bar. Two details matter:
-
 - The items come from a *generator*, `(i for i in range(10))`, which has no length. So tqdm **can't know the
   total**, and `total` is `None`. That's allowed: tqdm should just count, without a percentage.
-- `unit_scale=10` means "count every item as 10". After 10 items, the bar should say `100it` (100 items).
+- `unit_scale=10` means "count every item as 10". After 10 items, the bar should say `100it`.
 
 Instead, the program crashes: something tried to multiply `None` by a number.
 
 ### Step 6: Answer the questions
 
-qdebug asks 7 questions. Here are all the answers at once:
+qdebug asks 7 questions. Type the answer and press **Enter**:
 
 | qdebug asks about | What it shows | Your answer | Why |
 |---|---|---|---|
@@ -150,9 +236,14 @@ qdebug asks 7 questions. Here are all the answers at once:
 | Line check 2 | just before line 323, `total *= unit_scale` | `n` | It's about to multiply `None`. |
 | Line check 3 | just before line 322, the `if` above it | `y` | Nothing has gone wrong yet. |
 
-Type the answer and press **Enter**. Below, each question is shown as qdebug shows it (shortened a little),
-with the reason for the answer. Under each question qdebug also lists the functions it suspects most right
-now; you can ignore that.
+The first four are about **function calls** ("is that the right result?"). Once qdebug knows the broken
+function, it switches to **line checks** ("still on the right track here?"), where the rule is:
+
+> Answer **n** if a variable already has a wrong value, **or** if a correct program would never be at this
+> line with these values. Otherwise answer **y**.
+
+<details>
+<summary><b>Show every question as qdebug shows it, with the reasoning</b></summary>
 
 #### Question 1
 
@@ -182,7 +273,6 @@ now; you can ignore that.
 │ and it raised an error:                                                    │
 │ TypeError: TypeError("unsupported operand type(s) for *=: 'NoneType' ...   │
 ╰───────────────────────────────────────────────────────── tqdm/_tqdm.py:965 ─╯
-  Is that the right result? (y yes, n no, ? not sure, h more) >
 ```
 
 **Answer: `n`.** `__repr__` turns the bar into text. That should never crash either.
@@ -200,12 +290,10 @@ now; you can ignore that.
 │ 'ascii': True, 'unit': 'it', 'unit_scale': 10, 'rate': None,               │
 │ 'bar_format': None, 'postfix': None, 'unit_divisor': 1000}                 │
 ╰───────────────────────────────────────────────────────── tqdm/_tqdm.py:950 ─╯
-  Is that the right result? (y yes, n no, ? not sure, h more) >
 ```
 
 **Answer: `y`.** This just collects the bar's settings, and they match the test: `total` is `None` (the
-generator has no length), `unit_scale` is `10` (the test asked for that) and `n`, the count so far, is `0`
-(the bar is just starting).
+generator has no length), `unit_scale` is `10` and `n`, the count so far, is `0`.
 
 #### Question 4
 
@@ -221,18 +309,10 @@ generator has no length), `unit_scale` is `10` (the test asked for that) and `n`
 │ and it raised an error:                                                    │
 │ TypeError: TypeError("unsupported operand type(s) for *=: 'NoneType' ...   │
 ╰───────────────────────────────────────────────────────── tqdm/_tqdm.py:252 ─╯
-  Is that the right result? (y yes, n no, ? not sure, h more) >
 ```
 
 **Answer: `n`.** `format_meter` got the correct settings from Question 3 and should turn them into a
-progress bar. It crashed instead.
-
-qdebug now knows which function is broken: `format_meter` got correct inputs and still went wrong. Next it
-looks for the line. It replays `format_meter`, stops at different lines and shows you the variables. The
-question changes to *"Still on the right track here?"*, and the rule is:
-
-> Answer **n** if a variable already has a wrong value, **or** if a correct program would never be at this
-> line with these values. Otherwise answer **y**.
+progress bar. It crashed instead. qdebug now knows `format_meter` is broken, and starts the line checks.
 
 #### Line check 1
 
@@ -250,7 +330,7 @@ question changes to *"Still on the right track here?"*, and the rule is:
   Still on the right track here? (y yes, n no, ? not sure, h more) >
 ```
 
-**Answer: `n`.** This is the end of the function, and it's crashing. We already know that's wrong.
+**Answer: `n`.** This is the end of the function, and it's crashing.
 
 #### Line check 2
 
@@ -267,13 +347,11 @@ question changes to *"Still on the right track here?"*, and the rule is:
 │ n             0                                                            │
 │ total         None                                                         │
 │ unit_scale    10                                                           │
-│ ...                                                                        │
 ╰───────────────────────────────────────────────────────────── tqdm/_tqdm.py ─╯
-  Still on the right track here? (y yes, n no, ? not sure, h more) >
 ```
 
-**Answer: `n`.** This is the tricky one. Every variable still has a fine value, but line 323 is about to
-multiply `total` by 10, and `total` is `None`. A correct program would never be here with these values.
+**Answer: `n`.** The tricky one. Every variable still has a fine value, but line 323 is about to multiply
+`total` by 10, and `total` is `None`. A correct program would never be here with these values.
 
 #### Line check 3
 
@@ -289,13 +367,12 @@ multiply `total` by 10, and `total` is `None`. A correct program would never be 
 │ n             0                                                            │
 │ total         None                                                         │
 │ unit_scale    10                                                           │
-│ ...                                                                        │
 ╰───────────────────────────────────────────────────────────── tqdm/_tqdm.py ─╯
-  Still on the right track here? (y yes, n no, ? not sure, h more) >
 ```
 
-**Answer: `y`.** The values are the same correct ones as in Question 3, and the program hasn't done anything
-wrong yet. It's fine for it to reach this `if`.
+**Answer: `y`.** The values are the same correct ones as in Question 3, and nothing has gone wrong yet.
+
+</details>
 
 ### Step 7: The answer
 
@@ -313,28 +390,22 @@ wrong yet. It's fine for it to reach this `if`.
 7 questions to search a project with 109 functions, without reading its code.
 ```
 
-Things were fine just before line 322 and wrong just after it, so line 322 is the culprit. It checks the
-scale, but forgets to check that there **is** a total before line 323 multiplies it. That's exactly what
-tqdm's developers fixed: [their fix](https://github.com/tqdm/tqdm/commit/964dee631d0ed30e2f799b42fc58ba5e73795a08)
-adds an `if total:` check right there.
+Line 322 checks the scale but forgets to check that there **is** a total before line 323 multiplies it.
+That's exactly what tqdm's developers fixed:
+[their fix](https://github.com/tqdm/tqdm/commit/964dee631d0ed30e2f799b42fc58ba5e73795a08) adds an
+`if total:` check right there.
 
-You found a real bug in a 2,600-line library with 7 answers, without reading its code.
+### More to try in the same container
 
-### More to try in Docker
-
-The container also has 5 smaller practice bugs, planted on purpose in a small online-shop program written
-for qdebug. Try the first one:
+5 smaller practice bugs, planted on purpose in a small online-shop program:
 
 ```bash
 docker run -it --rm qdebug qdebug debug --project benchmarks/shop/variants/bug_01
 ```
 
-Two tests fail: type `1` to pick the first. Then read each function's description (the first line of each
-question) and decide if the result matches it. The answers are `n`, `n`, `n`, `n`, and qdebug lands on
+Two tests fail: type `1` to pick the first. The answers are `n`, `n`, `n`, `n`, and qdebug lands on
 line 24, `if quantity > 10:`, which should be `>= 10`. Change `bug_01` to `bug_02` up to `bug_05` for the
 others.
-
-To try qdebug on your own code in Docker, see [Use qdebug on your own project](#3-use-qdebug-on-your-own-project).
 
 ### All the keys you can press
 
@@ -352,31 +423,128 @@ To try qdebug on your own code in Docker, see [Use qdebug on your own project](#
 | `q` | stop and show what you have so far | stop |
 | `h` | help | help |
 
-Don't worry about making a mistake: qdebug treats every answer as a clue that might be wrong, checks its
-conclusion, and you can always press `u` to undo.
+Don't worry about making a mistake: qdebug treats every answer as a clue that might be wrong, and `u` undoes.
 
 ---
 
-## 2. Install qdebug on your computer
+## 4. A harder one: youtube-dl
 
-Use this to run qdebug without Docker. You need **Python 3.10 or newer** and **git**. Type each command into
-a terminal and press Enter after each one.
+The tqdm bug is a crash, close to where the error shows up. Most real bugs are harder: no crash, just a
+**wrong result**, produced deep inside a big program. This demo is one of those.
+
+[**youtube-dl**](https://github.com/ytdl-org/youtube-dl) downloads videos from YouTube and over a thousand
+other sites. In 2016 it was **701 files and about 104,000 lines** of code, and qdebug has to search through
+2,278 functions. The bug is BugsInPy's "youtube-dl bug 24", from qdebug's development set.
+
+### The bug
+
+youtube-dl has a `--match-filter` option to download only the videos you want, like
+`--match-filter "duration < 600"` (under 10 minutes) or `--match-filter "playlist_id = 42"`. The test gives
+it two fake videos and the filter `playlist_id = 42`:
+
+| video | `id` | `playlist_id` |
+|---|---|---|
+| first | `'1'` | `'42'` |
+| second | `'2'` | `'43'` |
+
+The first video should be downloaded and the second skipped. Instead **nothing** is downloaded:
+
+```text
+AssertionError: Lists differ: [] != ['1']
+```
+
+Notice the quotes: the video's `playlist_id` is the **text** `'42'`, not the number `42`. That will matter.
+
+### Run it
+
+Build this demo's container (in the qdebug folder, after [Steps 1 to 3](#step-1-install-docker-desktop) of
+the tqdm demo). It downloads youtube-dl's code from GitHub, about 4 MB, so it takes a few minutes:
+
+```bash
+docker build -t qdebug-youtube-dl -f examples/youtube-dl/Dockerfile .
+```
+
+Then either **answer the questions yourself**:
+
+```bash
+docker run -it --rm qdebug-youtube-dl
+```
+
+or **watch qdebug answer them on its own**, by comparing each call with youtube-dl's fixed version (the
+same robot answerer used in the study):
+
+```bash
+docker run -it --rm qdebug-youtube-dl demo watch
+```
+
+### The answers
+
+qdebug asks 7 questions about calls, following the wrong result down from the top of youtube-dl to the
+function that produced it, then 6 line checks. After Question 3 you'll see *"Not enough to go on yet, so
+QDebug is looking at more functions"*: it is recording more of the program (section 1, step 2).
+
+| | qdebug shows | Answer | Why |
+|---|---|---|---|
+| Question 1 | `process_ie_result` handled video `'1'` with `download=True` | `n` | Video 1 passes the filter and should be downloaded. The test shows it wasn't. |
+| Question 2 | `process_video_result` on video `'1'` | `n` | Same video, same reason. |
+| Question 3 | `process_info` on video `'1'` returned `None` | `n` | Same: this is the step that should download it. |
+| Question 4 | `_match_entry` returned `'one does not pass filter playlist_id = 42, skipping ..'` | `n` | Video 1's `playlist_id` is `'42'`. It **does** pass. |
+| Question 5 | `_match_func` returned the same message | `n` | Same reason. |
+| Question 6 | `match_str('playlist_id = 42', video 1)` returned `False` | `n` | Should be `True`. |
+| Question 7 | `_match_one('playlist_id = 42', video 1)` returned `False` | `n` | Should be `True`. |
+| Line check 1 | the end of `_match_one`: `comparison_value 42`, `actual_value '42'`, returning `False` | `n` | It compares the number `42` with the text `'42'`, and in Python those are never equal. |
+| Line check 2 | before line 2345, `m = operator_rex.search(filter_part)` | `y` | Nothing has happened yet. |
+| Line check 3 | before line 2354, the `try:` that turns `42` into a number | `n` | The video's value is text, so a correct program wouldn't go this way. |
+| Line check 4 | before line 2347, `op = COMPARISON_OPERATORS[...]` | `y` | It has only parsed the filter. Fine. |
+| Line check 5 | before line 2348, `if m.group('strval') is not None:` | `y` | Still fine: `op` is "equals". |
+| Line check 6 | before line 2355, `comparison_value = int(...)` | `n` | About to turn `42` into a number. |
+
+```text
+╭─ Found it ───────────────────────────────────────────────────────────────────────────────────╮
+│ youtube_dl/utils.py, line 2348, in _match_one                                                │
+│                                                                                              │
+│ 2346        if m:                                                                            │
+│ 2347            op = COMPARISON_OPERATORS[m.group('op')]                                     │
+│ 2348 >>         if m.group('strval') is not None:                                            │
+│ 2349                if m.group('op') not in ('=', '!='):                                     │
+│ 2350                    raise ValueError(                                                    │
+│                                                                                              │
+│ Confidence: High   Your answers point directly at this code.                                 │
+│ The bad call: _match_one(filter_part='playlist_id = 42', dct={'id': '1', 'url':              │
+│ 'http://localhost/...) → False                                                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+13 questions to search a project with 2,278 functions, without reading its code.
+```
+
+Line 2348 decides whether to compare as text or as a number by looking **only at the filter**: `42` looks
+like a number, so it becomes the number `42`. It never checks that the video's own value is text. That's
+the line youtube-dl's developers changed:
+[their fix](https://github.com/ytdl-org/youtube-dl/commit/e5a088dc4be4fdcc96927a9f1b7284d4cd49c415) also
+compares as text when the video's value is text.
+
+Ochiai's ranking put this function 2nd here; on the other hard youtube-dl bugs it is often much lower (15th
+for bug 8). What's in this container and where it comes from: [examples/youtube-dl](examples/youtube-dl/README.md).
+
+---
+
+## 5. Install qdebug on your computer
+
+Use this to run qdebug without Docker. You need **Python 3.10 or newer** and **git**.
 
 ### Windows
 
-1. **Install Python** if you don't have it: download it from
-   [python.org/downloads](https://www.python.org/downloads/). In the installer, tick
-   **"Add python.exe to PATH"** before clicking *Install Now*.
-2. **Install git** if you don't have it: [git-scm.com/download/win](https://git-scm.com/download/win)
-   (the default options are fine).
-3. Open **Command Prompt** (press the Windows key, type `cmd`, press Enter) and check Python works:
+1. **Install Python** from [python.org/downloads](https://www.python.org/downloads/). In the installer,
+   tick **"Add python.exe to PATH"** before clicking *Install Now*.
+2. **Install git** from [git-scm.com/download/win](https://git-scm.com/download/win) (the default options
+   are fine).
+3. Open **Command Prompt** (Windows key, type `cmd`, Enter) and check Python works:
 
    ```bash
    python --version
    ```
 
    It should print `Python 3.10` or higher.
-4. Download qdebug and go into its folder (skip this if you already did it for Docker):
+4. Download qdebug (skip this if you already did it for Docker):
 
    ```bash
    git clone https://github.com/SuyashCoding/qdebug.git
@@ -396,8 +564,7 @@ a terminal and press Enter after each one.
    .venv\Scripts\activate
    ```
 
-   Your prompt now starts with `(.venv)`. You need to run this `activate` line again every time you open
-   a new terminal.
+   Your prompt now starts with `(.venv)`. Run the `activate` line again in every new terminal.
 6. Install qdebug:
 
    ```bash
@@ -406,7 +573,7 @@ a terminal and press Enter after each one.
 
 ### macOS
 
-1. Open **Terminal** (press Cmd+Space, type `Terminal`, press Enter) and check Python:
+1. Open **Terminal** (Cmd+Space, type `Terminal`, Enter) and check Python:
 
    ```bash
    python3 --version
@@ -415,7 +582,7 @@ a terminal and press Enter after each one.
    If it says "command not found" or a version below 3.10, install Python from
    [python.org/downloads](https://www.python.org/downloads/). If macOS offers to install the
    *command line developer tools*, accept: that also installs git.
-2. Download qdebug and go into its folder (skip this if you already did it for Docker):
+2. Download qdebug (skip this if you already did it for Docker):
 
    ```bash
    git clone https://github.com/SuyashCoding/qdebug.git
@@ -435,7 +602,7 @@ a terminal and press Enter after each one.
    source .venv/bin/activate
    ```
 
-   Your prompt now starts with `(.venv)`. Run the `source` line again every time you open a new terminal.
+   Run the `source` line again in every new terminal.
 4. Install qdebug:
 
    ```bash
@@ -451,28 +618,20 @@ Ubuntu or Debian:
 sudo apt install python3 python3-venv git
 ```
 
-Then follow the macOS steps from step 2.
-
 ### Check it worked
 
 ```bash
 qdebug --version
 ```
 
-This should print `qdebug 0.2.0`.
-
-### Run the demo without Docker
-
-In the qdebug folder, with the virtual environment switched on:
+This should print `qdebug 0.2.0`. Then run the tqdm demo without Docker (same questions and answers as
+[in Docker](#step-6-answer-the-questions)):
 
 ```bash
 qdebug debug --project examples/tqdm
 ```
 
-It's the same tqdm bug, with the same questions and the same answers as
-[in Docker](#step-6-answer-the-questions).
-
-For the practice bugs, make them once, then debug the first:
+For the practice bugs, build them once, then debug the first:
 
 ```bash
 qdebug variants --suite shop
@@ -484,17 +643,17 @@ qdebug debug --project benchmarks/shop/variants/bug_01
 
 ---
 
-## 3. Use qdebug on your own project
+## 6. Use it on your own project
 
-qdebug works on any Python project that has **pytest tests with at least one failing test**. qdebug runs the
+qdebug works on any Python project with **pytest tests and at least one failing test**. It runs the
 project's tests, so the project's own packages must be installed where qdebug runs.
 
-To try it on a project that has no failing test, plant a bug yourself: change one small thing in its code,
-for example a `>=` into a `>`, run the tests to check one fails, and see whether qdebug finds your change.
+No failing test? Plant a bug yourself: change one small thing, for example a `>=` into a `>`, check that a
+test fails, and see whether qdebug finds your change.
 
-### With qdebug installed (section 2)
+### With qdebug installed (section 5)
 
-1. Get the project. For a public project on GitHub, download it (replace the address with the project's):
+1. Get the project, for example from GitHub:
 
    ```bash
    git clone https://github.com/someone/some-project.git
@@ -517,17 +676,13 @@ for example a `>=` into a `>`, run the tests to check one fails, and see whether
    qdebug debug --project path/to/some-project
    ```
 
-   If you are already in the project's folder, `qdebug debug` on its own is enough.
-
-If the project already has its **own** virtual environment with everything installed, skip step 2 and tell
-qdebug where it is instead: `qdebug debug --project some-project --python some-project/.venv` (that
-environment needs pytest).
+If the project has its **own** virtual environment, skip step 2 and point qdebug at it instead:
+`qdebug debug --project some-project --python some-project/.venv` (that environment needs pytest).
 
 ### With Docker
 
-First build the container ([Steps 1 to 4 of the demo](#1-try-the-demo-in-docker)). Then, in a terminal, go
-into **your project's folder** (`cd path/to/some-project`) and start the container with that folder inside it.
-The command depends on your terminal:
+Build the container first ([Steps 1 to 4](#step-1-install-docker-desktop)). Then `cd` into **your
+project's folder** and start the container with that folder inside it.
 
 Windows, Command Prompt:
 
@@ -547,20 +702,14 @@ macOS and Linux:
 docker run -it --rm -v "$(pwd):/work" -w /work qdebug bash
 ```
 
-You're now inside the container, in your project's folder (`/work`). Install the project's packages
-(`pip install -e .` or `pip install -r requirements.txt`, as above), then run:
-
-```bash
-qdebug debug
-```
-
-Type `exit` to leave the container. Changes to your project's files inside `/work` are real changes to the
-folder on your computer. Anything you install inside the container is gone when you leave it.
+Inside the container, install the project's packages (`pip install -e .` or
+`pip install -r requirements.txt`), then run `qdebug debug`. Type `exit` to leave. Changes to files in
+`/work` are real changes to your folder; anything you install is gone when you leave.
 
 ### When several tests fail
 
-Often one bug makes several tests fail, and a project can have more than one bug at a time. qdebug guesses
-which failing tests share a bug and shows them in groups:
+One bug often makes several tests fail, and a project can have more than one bug. qdebug guesses which
+failing tests share a bug and shows them in groups:
 
 ```text
 QDebug thinks these failures come from 2 different bugs. Debug one test from a group: its bug probably
@@ -575,102 +724,187 @@ Probable bug 2 (2 tests): they all run shop/pricing.py:27
   6  tests/test_invoice.py::test_bulk_invoice_qty_ten  AssertionError: assert 1890 == 1791
 ```
 
-Pick one test from a group. qdebug then uses only that group's tests to decide where to look first, so the
-other bug doesn't send it the wrong way. At the end it tells you which other failing tests the bug it found
-probably explains too, and which probably have a different bug: fix the first one, run the tests again,
-and run qdebug on what still fails.
+Pick one test from a group. At the end qdebug says which other failing tests the bug it found probably
+explains too. Fix it, run the tests again, and run qdebug on what still fails. The groups are a guess
+(right for 88% of the two-bug cases we measured); `--no-group` turns them off.
 
-The groups are a guess: they're right most of the time, but not always. You can always pick any test, and
-`--no-group` turns the grouping off.
+### Handy options
 
-### Handy extras
+| option | what it does |
+|---|---|
+| `--test ID` | debug this failing test (otherwise qdebug lets you pick) |
+| `--suite tests/test_one_file.py` | only run these tests (faster on big projects) |
+| `--python PATH` | the project's own Python or virtual environment |
+| `--oracle truth --fixed PATH` | answer automatically by comparing with a bug-free copy of the project |
+| `--policy baseline` | turn off the tuned search rules |
+| `--strategy topdown` or `divide` | the classic question orders, instead of the most useful question |
+| `qdebug rank --project PATH` | just show the most suspicious functions and lines, no questions |
 
-- To just see which functions look most suspicious, without any questions: `qdebug rank --project some-project`
-- To make qdebug only run some of the tests (faster on big projects):
-  `qdebug debug --project some-project --suite tests/test_one_file.py`
+Every option: `qdebug debug -h`, and [docs/DETAILS.md](docs/DETAILS.md).
 
 ---
 
-## 4. Optional: let Claude help
+## 7. Optional: let Claude help
 
 qdebug can ask **Claude**, Anthropic's AI model, to look at the failing test first, answer questions for
-you, and explain the bug at the end with a suggested fix. You don't need this: everything above works
-without it.
+you, and explain the bug at the end with a suggested fix. Nothing else in this README needs it.
 
-You need an **Anthropic API key**. The API is paid, but qdebug uses the small, cheap model (Claude Haiku);
-a debugging session should cost well under one cent.
+You need an **Anthropic API key**. The API is paid, but qdebug uses the small, cheap model (Claude Haiku).
 
-### Step 1: Get an API key
+1. **Get a key.** Sign in at [platform.claude.com](https://platform.claude.com), open **API Keys**, and
+   create a key (it starts with `sk-ant-`).
 
-Sign in to the Claude Console at [platform.claude.com](https://platform.claude.com), open **API Keys**,
-and create a key. It starts with `sk-ant-`. Copy it.
+   > **Keep your key secret.** Never paste it into code, never commit it to git, and don't share it.
 
-> **Keep your key secret.** Never paste it into your code, never commit it to git, and don't share it.
-> Anyone with the key can spend money on your account.
+2. **Give it to qdebug** for the current terminal (replace `sk-ant-...` with your key).
 
-### Step 2: Give qdebug your key
+   Windows, Command Prompt:
 
-The key goes in an *environment variable* called `ANTHROPIC_API_KEY`, which qdebug reads when it starts.
-Replace `sk-ant-...` with your key. This sets it for the current terminal window only.
+   ```bash
+   set ANTHROPIC_API_KEY=sk-ant-...
+   ```
 
-Windows, Command Prompt:
+   Windows, PowerShell:
+
+   ```bash
+   $env:ANTHROPIC_API_KEY = "sk-ant-..."
+   ```
+
+   macOS and Linux:
+
+   ```bash
+   export ANTHROPIC_API_KEY=sk-ant-...
+   ```
+
+3. **Choose how much Claude does** by adding one of these to a `qdebug debug` command:
+
+   | add this | who answers the questions |
+   |---|---|
+   | `--ai` | **you**; Claude takes a first look and explains the bug at the end |
+   | `--oracle hybrid` | **Claude** when it's sure, **you** when it isn't (it shows you its guess) |
+   | `--oracle claude` | **Claude** answers everything; you watch |
+
+   In Docker (`-e ANTHROPIC_API_KEY` passes your key into the container):
+
+   ```bash
+   docker run -it --rm -e ANTHROPIC_API_KEY qdebug qdebug debug --project examples/tqdm --oracle hybrid
+   ```
+
+   Without Docker you need Python **3.11 or newer** and the add-on, installed once:
+
+   ```bash
+   pip install -e ".[ai]"
+   ```
+
+Claude sees each call's description, inputs and outputs, but not the function's code: a model shown the
+buggy code tends to explain the bug away as intended. To teach it about your project (for example "all
+prices are in cents"), run `qdebug init-agent --project path/to/project` and edit `.qdebug/agent.md`.
+
+---
+
+## 8. Reproduce the results
+
+Everything in [section 2](#2-does-it-work) can be re-run. All commands are run in the qdebug folder.
+
+### The unit tests (under a minute)
+
+In Docker, after [building the container](#step-4-build-the-container):
 
 ```bash
-set ANTHROPIC_API_KEY=sk-ant-...
+docker run --rm qdebug python -m pytest -q -m "not e2e"
 ```
 
-Windows, PowerShell:
+Or with qdebug installed (section 5): `pytest -m "not e2e"`. Leave out `-m "not e2e"` to also run the
+end-to-end tests, which debug seeded bugs for real (a few minutes).
+
+### The practice bugs (about 6 minutes)
+
+The 39 bugs planted in the shop and planner projects, answered by the robot oracle:
 
 ```bash
-$env:ANTHROPIC_API_KEY = "sk-ant-..."
+docker run --rm qdebug qdebug eval --suite planner --strategies infogain --noise 0
 ```
-
-macOS and Linux:
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+docker run --rm qdebug qdebug eval --suite shop --strategies infogain --noise 0,0.1,0.2 --seeds 10
 ```
 
-To keep it for every new window: on Windows run `setx ANTHROPIC_API_KEY sk-ant-...` once; on macOS or Linux,
-add the `export` line to the end of `~/.zshrc` (macOS) or `~/.bashrc` (Linux).
+Each prints one line per bug (`found=1/1 line=1/1 meanQ=...`); compare with
+[results/planner/summary.md](results/planner/summary.md) and [results/shop/summary.md](results/shop/summary.md).
 
-### Step 3: Debug with Claude
+### The real-bug study (minutes for one bug, about a day for all 229)
 
-Choose how much Claude does by adding one of these to the end of a `qdebug debug` command:
+This has its own container, because it downloads and installs each project's 2019–2020 code and libraries.
+They only ever run inside the container. A Docker *volume* keeps the downloads between runs.
 
-| add this | who answers the questions |
+```bash
+docker build -t qdebug-bugsinpy -f benchmarks/bugsinpy.Dockerfile benchmarks
+```
+
+```bash
+docker volume create qdebug-bugsinpy
+```
+
+Run one bug first, tqdm bug 4 (the demo bug). The command depends on your terminal. Windows, Command Prompt:
+
+```bash
+docker run --rm -v "%cd%:/qdebug" -v qdebug-bugsinpy:/work qdebug-bugsinpy qdebug bugsinpy --bugsinpy /work/BugsInPy --work /work/w --strategies infogain,topdown,divide --policies baseline,tuned --noise 0.1,0.2 --seeds 3 --out /qdebug/results/my-study --bugs tqdm:4
+```
+
+Windows, PowerShell: the same with `"${PWD}:/qdebug"` instead of `"%cd%:/qdebug"`. macOS and Linux: the same
+with `"$(pwd):/qdebug"`.
+
+The results land in `results/my-study/results.csv`, one row per session. To run the whole study, replace
+`--bugs tqdm:4` with
+`--bugs PySnooper,cookiecutter,httpie,thefuck,tqdm,youtube-dl,black,fastapi,luigi,sanic,tornado,scrapy`
+(you can stop and rerun the same command: bugs already in `results.csv` are skipped). Then make the tables:
+
+```bash
+docker run --rm -v "%cd%:/qdebug" -v qdebug-bugsinpy:/work qdebug-bugsinpy qdebug study-report --results /qdebug/results/my-study/results.csv
+```
+
+That writes `results/my-study/study.md`, in the same format as
+[results/bugsinpy-2026/study.md](results/bugsinpy-2026/study.md). Expect small differences: a few bugs
+behave differently from run to run (these are reported as *nondeterministic*), and the plan's
+[Deviations](docs/EVALUATION_PLAN.md#deviations) explain the setup fixes made during our run.
+
+---
+
+## 9. What's in this repository
+
+| command | what it does |
 |---|---|
-| `--ai` | **you**; Claude takes a first look and explains the bug at the end |
-| `--oracle hybrid` | **Claude** when it's sure, **you** when it isn't (it shows you its guess) |
-| `--oracle claude` | **Claude** answers everything; you just watch |
+| `qdebug debug` | debug a failing test by answering questions (or let Claude answer) |
+| `qdebug rank` | rank functions and lines by suspiciousness, no questions |
+| `qdebug init-agent` | copy Claude's instructions into a project to customise them |
+| `qdebug variants` | build and check the buggy copies of the practice projects |
+| `qdebug eval` | batch experiments on the practice bugs (strategies, policies, wrong answers) |
+| `qdebug eval-groups` | put two bugs in one project and measure the grouping of failing tests |
+| `qdebug eval-ai` | measure Claude as the answerer (costs API usage) |
+| `qdebug bugsinpy` | run the real-bug study on BugsInPy |
+| `qdebug study-report` | the study's tables and statistics from its results |
 
-**In Docker** (the container already has everything Claude needs), `-e ANTHROPIC_API_KEY` passes your key
-into the container:
-
-```bash
-docker run -it --rm -e ANTHROPIC_API_KEY qdebug qdebug debug --project examples/tqdm --oracle hybrid
+```text
+qdebug/            the tool
+  cli.py             the commands above
+  session.py         a debugging session: recording tiers, questions, undo, line search, fallback
+  belief.py          the probability for every call, and the information gain of each question
+  strategies.py      information gain (qdebug's), top-down and divide-and-query
+  tuning.py          the tuned search rules, each with the failure it came from
+  zoom.py            the line-level search inside the broken function
+  ranking.py         Ochiai and DStar scores; groups.py: grouping failing tests
+  runner.py, plugin.py, tracer.py   running pytest in a subprocess and recording calls and values
+  oracles.py         who answers: you, the robot (ground truth), or the robot with wrong answers
+  ai/                the optional Claude integration
+  ui.py, report.py   the terminal interface and the saved session report
+  evaluate.py, bugsinpy.py, study.py   the experiments and the real-bug study
+benchmarks/        the practice projects (shop: 5 bugs, planner: 34 bugs) and the study's Dockerfile
+examples/          the tqdm and youtube-dl demos
+results/           every result table, as CSV and markdown
+docs/              EXPLAINED.md (plain English), DETAILS.md (everything), EVALUATION_PLAN.md,
+                   USER_STUDY.md (planned), paper/ (the paper and its source)
+tests/             unit and end-to-end tests
 ```
-
-**Without Docker** you need Python **3.11 or newer**. Install the Claude add-on once, in the qdebug folder
-with the virtual environment switched on:
-
-```bash
-pip install -e ".[ai]"
-```
-
-Then:
-
-```bash
-qdebug debug --project examples/tqdm --oracle hybrid
-```
-
-If the add-on isn't installed or your Python is too old, qdebug stops and tells you what to install. If
-the key is missing or wrong, `--oracle claude` stops too, while `--ai` and `--oracle hybrid` carry on with
-you answering every question.
-
-Want to teach Claude about your project? Run `qdebug init-agent --project path/to/your/project`. It copies
-Claude's instructions into `.qdebug/agent.md` inside your project, where you can edit them, for example to
-explain that all prices are in cents.
 
 ---
 
@@ -683,15 +917,19 @@ and wait until it says *Engine running*.
 
 **`unable to find image 'qdebug:latest'` or `pull access denied for qdebug`.** You haven't built the
 container yet: run `docker build -t qdebug .` in the qdebug folder ([Step 4](#step-4-build-the-container)).
+For the youtube-dl demo the image is `qdebug-youtube-dl` ([section 4](#run-it)).
 
 **`failed to read dockerfile` or `no such file or directory`.** Your terminal isn't in the qdebug folder:
 `cd qdebug` first.
+
+**The youtube-dl build fails while downloading.** It needs internet access to github.com. Try again; if
+you are behind a proxy, Docker needs to know about it.
 
 **`the input device is not a TTY`.** You're in Git Bash on Windows. Use Command Prompt or PowerShell
 instead, or put `winpty` in front: `winpty docker run -it --rm qdebug`.
 
 **qdebug shows "Best guess ... You stopped early" without waiting for your answer.** You left out `-it` in
-`docker run -it --rm qdebug`. It's what lets you type into the container.
+`docker run -it --rm ...`. It's what lets you type into the container.
 
 ### Without Docker
 
@@ -703,31 +941,29 @@ PATH"*). On macOS and Linux use `python3` instead of `python`.
 `.venv\Scripts\activate` (Windows) or `source .venv/bin/activate` (macOS/Linux) from the qdebug folder.
 `python -m qdebug` also works anywhere `qdebug` would.
 
-**PowerShell says "running scripts is disabled on this system".** Use Command Prompt (`cmd`) instead,
-where `.venv\Scripts\activate` works.
+**PowerShell says "running scripts is disabled on this system".** Use Command Prompt (`cmd`) instead.
 
-**`project directory not found: examples/tqdm`.** Your terminal isn't in the qdebug folder: `cd qdebug`
-first.
-
-**`project directory not found: benchmarks/shop/variants/bug_01`.** You haven't made the practice bugs yet:
-run `qdebug variants --suite shop` once.
+**`project directory not found: benchmarks/shop/variants/bug_01`.** Make the practice bugs first:
+`qdebug variants --suite shop`.
 
 ### Both
 
 **`no failing test in ...`.** All of that project's tests pass, so there is nothing to debug.
 
 **`ModuleNotFoundError` in the test results.** The project's own packages aren't installed where qdebug
-runs. See [Use qdebug on your own project](#3-use-qdebug-on-your-own-project).
+runs. See [Use it on your own project](#6-use-it-on-your-own-project).
 
-**`the Claude features need ...`.** Follow what the message says: install the add-on
-(`pip install -e ".[ai]"`), use Python 3.11 or newer, or set your API key.
+**`the Claude features need ...`.** Install the add-on (`pip install -e ".[ai]"`), use Python 3.11 or
+newer, or set your API key.
 
 ---
 
 ## Learn more
 
-- [docs/DETAILS.md](docs/DETAILS.md): how qdebug works, every option, and the measured results
-- [results/](results/): the benchmark results, including Claude Haiku answering every question
+- [docs/EXPLAINED.md](docs/EXPLAINED.md): qdebug in plain English
+- [docs/paper/qdebug-paper.docx](docs/paper/qdebug-paper.docx): the paper
+- [docs/DETAILS.md](docs/DETAILS.md): how it works in depth, every option, and all measured results
+- [docs/EVALUATION_PLAN.md](docs/EVALUATION_PLAN.md): the real-bug study's plan, written before it ran
 - [CHANGELOG.md](CHANGELOG.md): what changed in each version
 
 qdebug is open source under the [MIT license](LICENSE).
