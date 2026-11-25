@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **The real-bug study.** qdebug was run on 229 BugsInPy bugs following a plan written before the run
+- **The real-bug study.** QDebug was run on 229 BugsInPy bugs following a plan written before the run
   (`results/bugsinpy-2026/PLAN.md`). On the 105 completed bugs of six held-out projects it named the buggy function
   for 47% against 22% for Ochiai's top entry (p < 0.001); tables in `results/bugsinpy-2026/study.md`. The
   study's tooling: `qdebug bugsinpy --policies --noise --seeds`, `qdebug study-report`, and
@@ -12,7 +12,7 @@
 - A second demo, a wrong-value bug 7 calls deep in youtube-dl (`examples/youtube-dl`), with its own
   Dockerfile; CI replays its answers too.
 
-- **Several failing tests, several bugs.** qdebug groups the failing tests by the bug that probably causes
+- **Several failing tests, several bugs.** QDebug groups the failing tests by the bug that probably causes
   them (same crash location, or a rarely-passed line they all run) and shows the groups when you pick a test.
   The session ranks code against the chosen test's group only, so another bug's failures don't dilute it, and
   the result says which other failures the bug found probably explains and which need another session.
@@ -23,10 +23,10 @@
 
 - The README demo is now a real bug in a real library: tqdm bug 4 from BugsInPy, vendored in
   `examples/tqdm` with a small stand-in for the `nose` helpers its 2019 tests import, so they run with
-  pytest on Python 3.10+. qdebug finds the line the maintainers fixed in 7 questions.
-- A `Dockerfile` runs qdebug (and the demo, by default) the same way on any computer. The README starts
+  pytest on Python 3.10+. QDebug finds the line the maintainers fixed in 7 questions.
+- A `Dockerfile` runs QDebug (and the demo, by default) the same way on any computer. The README starts
   with the demo in Docker, shows every question with its answer the same way, and explains how to run
-  qdebug on your own project, with or without Docker.
+  QDebug on your own project, with or without Docker.
 - CI replays the README's demo answers on Linux, Windows and macOS, and builds and runs the Docker image.
 
 ## 0.2.0
@@ -45,7 +45,7 @@
 - The prompt is a markdown file (`qdebug/ai/agent.md`). `qdebug init-agent` copies it to
   `.qdebug/agent.md` in your project, where each section can be rewritten and project facts added.
 - The default model is `claude-haiku-5-5` (`--ai-model`, `$QDEBUG_AI_MODEL`). Without the
-  `anthropic` package or credentials, qdebug says how to fix it; hybrid mode falls back to you.
+  `anthropic` package or credentials, QDebug says how to fix it; hybrid mode falls back to you.
 
 - Questions about a call show Claude (and you, with `e`) calls of the same function from passing tests,
   the closest inputs first: the best evidence of what the function is meant to do.

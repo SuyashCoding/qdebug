@@ -8,13 +8,13 @@ run 2 repeats the whole benchmark with them.
 ## How it was run
 
 No API key was available, so the model calls went through the file relay (`qdebug eval-ai --relay DIR`,
-[`qdebug/ai/relay.py`](../../qdebug/ai/relay.py)): qdebug writes each request (the same system text, prompt
+[`qdebug/ai/relay.py`](../../qdebug/ai/relay.py)): QDebug writes each request (the same system text, prompt
 and JSON schema it would send to the API) to a file, and a Claude Code subagent running Haiku answers it.
 One fresh agent per bug, instructed to use nothing but the printed request.
 
 That differs from the API in ways that matter for reading the numbers:
 
-* The agents ran with Claude Code's own system prompt in addition to qdebug's, and the JSON schema was an
+* The agents ran with Claude Code's own system prompt in addition to QDebug's, and the JSON schema was an
   instruction, not enforced by structured outputs.
 * There are no token counts, so there is no measured cost. From the prompt sizes (about 1k tokens of
   cacheable system text and 1k per question, 9 to 10 requests per bug), the API cost on Haiku 5.5 should be

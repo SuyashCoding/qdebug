@@ -1,4 +1,4 @@
-# A real bug in tqdm, for the qdebug demo
+# A real bug in tqdm, for the QDebug demo
 
 This folder is [tqdm](https://github.com/tqdm/tqdm), the popular Python progress-bar library, exactly as it
 was at commit [`03b3476`](https://github.com/tqdm/tqdm/tree/03b347646492131d889871939b40457d29147216)
@@ -23,7 +23,7 @@ the total when there is one (`if total:`).
 - On the buggy code, `tests_tqdm.py` has 50 passing tests and one failing test, `test_nototal`.
 - Files with no Python code that the demo never uses were left out: `DEMO.ipynb`, `logo.png`, the
   `Makefile`, `tox.ini`, `setup.cfg`, `.coveragerc`, `.readme.rst`, `CONTRIBUTING.md`, `demo.yml`,
-  `requirements-dev.txt` and the man page `tqdm/tqdm.1`. Every Python file is kept: qdebug ranks all of a
+  `requirements-dev.txt` and the man page `tqdm/tqdm.1`. Every Python file is kept: QDebug ranks all of a
   project's code, so removing one would change the demo's questions.
 
 tqdm is released under the MIT and MPL 2.0 licences; see [LICENCE](LICENCE).
