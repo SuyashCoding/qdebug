@@ -2,6 +2,9 @@
 
 **qdebug finds the bug behind a failing test by asking you simple yes/no questions.**
 
+**Paper:** [QDebug: Finding Python Bugs with Yes/No Questions](paper/QDebug-paper.pdf) (Suyash Patel,
+Quang Le; 3 pages, PDF)
+
 When a test fails, it tells you the final answer was wrong, not *where* the mistake is. Finding that usually
 means reading a lot of code. qdebug does the searching instead. It runs the failing test, records every
 function call (what went in, what came out), and shows you one call at a time:
@@ -905,6 +908,7 @@ benchmarks/        the practice projects (shop: 5 bugs, planner: 34 bugs) and th
 examples/          the tqdm and youtube-dl demos
 results/           every result table, as CSV and markdown; bugsinpy-2026/ holds the real-bug study,
                    its plan (PLAN.md) and its report (study.md)
+paper/             the paper (PDF)
 tests/             unit and end-to-end tests
 ```
 
@@ -962,6 +966,7 @@ newer, or set your API key.
 
 ## Learn more
 
+- [paper/QDebug-paper.pdf](paper/QDebug-paper.pdf): the paper
 - [results/bugsinpy-2026/study.md](results/bugsinpy-2026/study.md): every table of the real-bug study
 - [results/bugsinpy-2026/PLAN.md](results/bugsinpy-2026/PLAN.md): the study's plan, written before it ran
 - [results/claude-haiku/README.md](results/claude-haiku/README.md): Claude Haiku answering the questions
